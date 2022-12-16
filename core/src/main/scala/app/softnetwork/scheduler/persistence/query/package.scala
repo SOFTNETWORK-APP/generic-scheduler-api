@@ -7,6 +7,8 @@ import app.softnetwork.persistence._
 import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider}
 import app.softnetwork.persistence.message.{Command, CommandResult}
+import app.softnetwork.scheduler.config.SchedulerSettings
+import app.softnetwork.scheduler.handlers.SchedulerDao
 import app.softnetwork.scheduler.message._
 
 import org.softnetwork.akka.message.SchedulerEvents._
@@ -15,9 +17,6 @@ import org.softnetwork.akka.model.{CronTab, Schedule}
 import scala.concurrent.Future
 
 package query {
-
-  import app.softnetwork.scheduler.config.SchedulerSettings
-  import app.softnetwork.scheduler.handlers.SchedulerDao
 
   /** Created by smanciot on 04/09/2020.
     */
