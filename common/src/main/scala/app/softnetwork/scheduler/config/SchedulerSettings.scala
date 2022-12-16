@@ -23,11 +23,11 @@ object SchedulerSettings extends StrictLogging {
 
 case class SchedulerConfig(
   id: Option[String],
-  resetCronTabs: ResetCronTabs,
+  resetScheduler: ResetScheduler,
   eventStreams: SchedulerEventStreams,
   akkaNodeRole: String
 )
 
-case class ResetCronTabs(initialDelay: Int, delay: Int)
+case class ResetScheduler(initialDelay: Int, delay: Int)
 
 case class SchedulerEventStreams(entityToSchedulerTag: String)

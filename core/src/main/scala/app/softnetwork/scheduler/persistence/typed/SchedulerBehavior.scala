@@ -80,7 +80,7 @@ private[scheduler] trait SchedulerBehavior
           implicit val system: ActorSystem[_] = context.system
           implicit val ec: ExecutionContextExecutor = system.executionContext
           system.scheduler.scheduleOnce(
-            SchedulerSettings.SchedulerConfig.resetCronTabs.delay.seconds,
+            SchedulerSettings.SchedulerConfig.resetScheduler.delay.seconds,
             () => schedulerDao.resetCronTabsAndSchedules(resetScheduler = false)
           )
           Effect
@@ -96,7 +96,7 @@ private[scheduler] trait SchedulerBehavior
             if (
               scheduler.lastCronTabsAndSchedulesReseted.isEmpty ||
               ((now().getTime - scheduler.getLastCronTabsAndSchedulesReseted.getTime) >
-              SchedulerSettings.SchedulerConfig.resetCronTabs.delay * 1000)
+              SchedulerSettings.SchedulerConfig.resetScheduler.delay * 1000)
             ) {
               scheduler.cronTabs.foreach { cronTab =>
                 context.self ! AddCronTab(cronTab)
@@ -117,7 +117,7 @@ private[scheduler] trait SchedulerBehavior
           case Some(scheduler)
               if scheduler.lastCronTabsAndSchedulesReseted.isEmpty ||
                 ((now().getTime - scheduler.getLastCronTabsAndSchedulesReseted.getTime) >
-                SchedulerSettings.SchedulerConfig.resetCronTabs.delay * 1000) =>
+                SchedulerSettings.SchedulerConfig.resetScheduler.delay * 1000) =>
             trigerResetCronTabsAndSchedules(scheduler, switch = false)
           case _ => Effect.none.thenRun(_ => CronTabsAndSchedulesNotReseted ~> replyTo)
         }

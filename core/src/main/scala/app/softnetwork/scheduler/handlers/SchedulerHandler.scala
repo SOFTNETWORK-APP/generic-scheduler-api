@@ -36,7 +36,7 @@ trait SchedulerDao extends Completion {
     implicit val ec: ExecutionContextExecutor = system.executionContext
     resetScheduler() await { _ =>
       system.scheduler.scheduleOnce(
-        SchedulerSettings.SchedulerConfig.resetCronTabs.initialDelay.seconds,
+        SchedulerSettings.SchedulerConfig.resetScheduler.initialDelay.seconds,
         () => resetCronTabsAndSchedules(resetScheduler = true)
       )
     }
