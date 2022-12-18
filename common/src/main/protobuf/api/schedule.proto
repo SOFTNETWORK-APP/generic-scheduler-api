@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+import "model/schedule.proto";
+
+package app.softnetwork.schedule.api;
+
+option (scalapb.options) = {
+    import: "app.softnetwork.protobuf.ScalaPBTypeMappers._"
+    preserve_unknown_fields: false
+};
+
+service SchedulerServiceApi {
+    rpc AddSchedule (AddScheduleRequest) returns (AddScheduleResponse) {}
+    rpc RemoveSchedule (RemoveScheduleRequest) returns (RemoveScheduleResponse) {}
+}
+
+message AddScheduleRequest{
+    org.softnetwork.akka.model.Schedule schedule = 1;
+}
+
+message AddScheduleResponse{
+    bool succeeded = 1;
+}
+
+message RemoveScheduleRequest{
+    string persistenceId = 1;
+    string entityId = 2;
+    string key = 3;
+}
+
+message RemoveScheduleResponse{
+    bool succeeded = 1;
+}
+

@@ -4,6 +4,7 @@ import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.launch.{PersistenceGuardian, PersistentEntity}
 import app.softnetwork.persistence.launch.PersistenceGuardian._
 import app.softnetwork.persistence.query.{EventProcessorStream, SchemaProvider}
+import app.softnetwork.scheduler.api.SchedulerServer
 import app.softnetwork.scheduler.handlers.SchedulerDao
 import app.softnetwork.scheduler.persistence.query.{
   Entity2SchedulerProcessorStream,
@@ -47,6 +48,10 @@ trait SchedulerGuardian extends PersistenceGuardian with StrictLogging {
       case Failure(f) => logger.error(f.getMessage, f)
     }
   }
+
+  /** initialize scheduler server
+    */
+  def schedulerServer: ActorSystem[_] => SchedulerServer = sys => SchedulerServer(sys)
 
   override def initSystem: ActorSystem[_] => Unit = initSchedulerSystem
 }

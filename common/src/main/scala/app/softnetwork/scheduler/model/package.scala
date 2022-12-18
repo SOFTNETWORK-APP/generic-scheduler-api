@@ -29,15 +29,18 @@ package object model {
 
   trait ScheduleDecorator {
     _: Schedule =>
-    /* flag to indicate whether we should trigger this schedule
+    /* flag to indicate whether the scheduled date has been reached or not
+     */
+    val scheduledDateReached: Boolean =
+      scheduledDate.isDefined && (now().after(getScheduledDate) || now().equals(getScheduledDate))
+    /* flag to indicate whether we could trigger this schedule
      */
     val triggerable: Boolean =
-      // the schedule has never been triggered and has no scheduled date
-      (lastTriggered.isEmpty && scheduledDate.isEmpty) ||
+      // the schedule has never been triggered or can be triggered repeatedly and has no scheduled date
+      ((lastTriggered.isEmpty || repeatedly.getOrElse(false)) && scheduledDate.isEmpty) ||
       // the schedule should be triggered at a specified date that has been reached
       // and it has not yet been triggered or has been triggered before the specified date
-      (scheduledDate.isDefined &&
-      now().after(getScheduledDate) &&
+      (scheduledDateReached &&
       (lastTriggered.isEmpty || getLastTriggered.before(getScheduledDate)))
 
     /* flag to indicate whether we should remove this schedule
