@@ -4,7 +4,7 @@ import app.softnetwork.scheduler.scalatest.SchedulerTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.softnetwork.akka.model.Schedule
 
-class SchedulerClientSpec extends AnyWordSpecLike with SchedulerTestKit {
+class SchedulerClientSpec extends AnyWordSpecLike with SchedulerTestKit with SchedulerGrpcServer {
 
   lazy val client: SchedulerClient = SchedulerClient(typedSystem())
 

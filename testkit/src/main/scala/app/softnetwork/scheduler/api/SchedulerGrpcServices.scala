@@ -15,11 +15,15 @@ trait SchedulerGrpcServices extends GrpcServices {
 
   def port: Int
 
-  final override def grpcServices
+  override def grpcServices
+    : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] =
+    schedulerGrpcServices
+
+  def schedulerGrpcServices
     : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] = system =>
     Seq(SchedulerServiceApiHandler.partial(schedulerServer(system))(system))
 
-  def grpcConfig: String = s"""
+  def schedulerGrpcConfig: String = s"""
                               |# Important: enable HTTP/2 in ActorSystem's config
                               |akka.http.server.preview.enable-http2 = on
                               |akka.grpc.client."${SchedulerClient.name}"{

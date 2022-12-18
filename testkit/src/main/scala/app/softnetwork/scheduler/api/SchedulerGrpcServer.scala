@@ -9,5 +9,5 @@ trait SchedulerGrpcServer
     extends PersistenceScalatestGrpcTest
     with SchedulerGrpcServices
     with InMemoryPersistenceTestKit { _: Suite with SchedulerGuardian =>
-  override lazy val additionalConfig: String = grpcConfig
+  override lazy val additionalConfig: String = schedulerGrpcConfig
 }
