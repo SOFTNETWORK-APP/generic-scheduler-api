@@ -67,5 +67,28 @@ class SchedulerHandlerSpec extends SchedulerHandler with AnyWordSpecLike with Sc
         case other            => fail(other.getClass)
       }
     }
+    "trigger repeatedly a schedule" in {
+      val schedule = Schedule("p", "3", "add", 1, Some(true), Some(now()))
+      assert(schedule.triggerable)
+      this !? AddSchedule(schedule) assert {
+        case r: ScheduleAdded => assert(r.schedule.triggerable)
+        case other            => fail(other.getClass)
+      }
+      // trigger schedule
+      this !? TriggerSchedule(schedule.persistenceId, schedule.entityId, schedule.key) assert {
+        case r: ScheduleTriggered => assert(!r.schedule.triggerable)
+        case other                => fail(other.getClass)
+      }
+      // update scheduled date
+      this !? AddSchedule(schedule.withScheduledDate(now())) assert {
+        case r: ScheduleAdded => assert(r.schedule.triggerable)
+        case other            => fail(other.getClass)
+      }
+      // trigger schedule
+      this !? TriggerSchedule(schedule.persistenceId, schedule.entityId, schedule.key) assert {
+        case r: ScheduleTriggered => assert(!r.schedule.triggerable)
+        case other                => fail(other.getClass)
+      }
+    }
   }
 }
