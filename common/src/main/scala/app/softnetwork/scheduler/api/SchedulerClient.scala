@@ -2,6 +2,7 @@ package app.softnetwork.scheduler.api
 
 import akka.actor.typed.ActorSystem
 import akka.grpc.GrpcClientSettings
+import app.softnetwork.api.server.client.{GrpcClient, GrpcClientFactory}
 import app.softnetwork.schedule.api.{
   AddScheduleRequest,
   RemoveScheduleRequest,

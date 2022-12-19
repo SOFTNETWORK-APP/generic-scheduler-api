@@ -8,7 +8,7 @@ name := "scheduler-common"
 
 libraryDependencies ++= Seq(
   "com.markatta" %% "akron" % "1.2" excludeAll(ExclusionRule(organization = "com.typesafe.akka"), ExclusionRule(organization = "org.scala-lang.modules")),
-  "app.softnetwork.api" %% "generic-server-api" % Versions.genericPersistence,
+  "app.softnetwork.api" %% "generic-server-api" % Versions.server,
   "app.softnetwork.protobuf" %% "scalapb-extensions" % "0.1.5"
 )
 

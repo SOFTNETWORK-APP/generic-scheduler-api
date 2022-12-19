@@ -3,17 +3,14 @@ package app.softnetwork.scheduler.api
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.api.server.GrpcServices
+import app.softnetwork.api.server.scalatest.ServerTestKit
 import app.softnetwork.schedule.api.SchedulerServiceApiHandler
 import app.softnetwork.scheduler.launch.SchedulerGuardian
 
 import scala.concurrent.Future
 
 trait SchedulerGrpcServices extends GrpcServices {
-  _: SchedulerGuardian =>
-
-  def interface: String
-
-  def port: Int
+  _: SchedulerGuardian with ServerTestKit =>
 
   override def grpcServices
     : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] =
