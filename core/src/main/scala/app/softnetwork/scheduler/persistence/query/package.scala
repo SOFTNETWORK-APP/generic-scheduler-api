@@ -26,6 +26,8 @@ package query {
 
     def schedulerDao: SchedulerDao = SchedulerDao
 
+    def forTests: Boolean = false
+
     /** Processing event
       *
       * @param event
@@ -49,7 +51,11 @@ package query {
               if (persistenceId.startsWith(schedule.persistenceId)) {
                 val entityId = persistenceId.split("\\|").last
                 if (entityId != ALL_KEY) {
-                  schedulerDao.addSchedule(schedule.withEntityId(entityId))
+                  if (forTests) {
+                    schedulerDao.addSchedule(schedule.withEntityId(entityId).withDelay(1))
+                  } else {
+                    schedulerDao.addSchedule(schedule.withEntityId(entityId))
+                  }
                 } else {
                   Future.successful(true)
                 }
@@ -69,18 +75,27 @@ package query {
         case evt: CronTabTriggeredEvent =>
           import evt._
           if (cronTab.entityId == ALL_KEY) {
-            currentPersistenceIds().runForeach(persistenceId => {
-              if (persistenceId.startsWith(cronTab.persistenceId)) {
-                val entityId = persistenceId.split("\\|").last
-                if (entityId != ALL_KEY) {
-                  schedulerDao.addCronTab(cronTab.withEntityId(entityId))
-                } else {
-                  Future.successful(true)
-                }
-              } else {
-                Future.successful(true)
-              }
-            })
+            val maybeSchedule: Option[Schedule] = cronTab
+            maybeSchedule match {
+              case Some(schedule) =>
+                currentPersistenceIds().runForeach(persistenceId => {
+                  if (persistenceId.startsWith(cronTab.persistenceId)) {
+                    val entityId = persistenceId.split("\\|").last
+                    if (entityId != ALL_KEY) {
+                      if (forTests) {
+                        schedulerDao.addSchedule(schedule.withEntityId(entityId).withDelay(1))
+                      } else {
+                        schedulerDao.addSchedule(schedule.withEntityId(entityId))
+                      }
+                    } else {
+                      Future.successful(true)
+                    }
+                  } else {
+                    Future.successful(true)
+                  }
+                })
+              case _ => Future.successful(Done)
+            }
           } else {
             triggerCronTab(cronTab).map {
               case true => Done

@@ -23,8 +23,6 @@ private[scheduler] trait SchedulerBehavior
 
   lazy val schedulerId: String = SchedulerSettings.SchedulerConfig.id.getOrElse(ALL_KEY)
 
-  override val emptyState: Option[Scheduler] = None
-
   override val snapshotInterval: Int = 100
 
   private def schedulerDao: SchedulerDao = SchedulerDao
@@ -379,7 +377,9 @@ private[scheduler] trait SchedulerBehavior
                         ct.entityId != ALL_KEY && ct.persistenceId == cronTab.persistenceId && ct.key == cronTab.key
                       )
                       .map(ct => CronTabRemovedEvent(ct.persistenceId, ct.entityId, ct.key))
-                      .toList
+                      .toList ++ scheduler.schedules
+                      .filter(_.getCronTab == cmd.uuid)
+                      .map(s => ScheduleRemovedEvent(s.persistenceId, s.entityId, s.key))
                   } else {
                     List.empty
                   }
