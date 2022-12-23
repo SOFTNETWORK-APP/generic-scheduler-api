@@ -23,8 +23,6 @@ private[scheduler] trait SchedulerBehavior
 
   lazy val schedulerId: String = SchedulerSettings.SchedulerConfig.id.getOrElse(ALL_KEY)
 
-  override val emptyState: Option[Scheduler] = None
-
   override val snapshotInterval: Int = 100
 
   private def schedulerDao: SchedulerDao = SchedulerDao

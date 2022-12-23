@@ -8,9 +8,10 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import com.markatta.akron.CronExpression
 import com.typesafe.scalalogging.StrictLogging
-import org.softnetwork.akka.model.Schedule
+import org.softnetwork.akka.model.{CronTab, Schedule}
 
 import scala.concurrent.duration._
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /** Created by smanciot on 11/05/2021.
@@ -89,6 +90,21 @@ package object model {
 
         case _ => None
       }
+    }
+  }
+
+  implicit def cronTabToSchedule(cronTab: CronTab): Option[Schedule] = {
+    cronTab.nextTriggered match {
+      case Some(date) =>
+        Some(
+          Schedule.defaultInstance
+            .withPersistenceId(cronTab.persistenceId)
+            .withEntityId(cronTab.entityId)
+            .withKey(cronTab.key)
+            .withScheduledDate(date)
+            .withRepeatedly(true)
+        )
+      case _ => None
     }
   }
 }

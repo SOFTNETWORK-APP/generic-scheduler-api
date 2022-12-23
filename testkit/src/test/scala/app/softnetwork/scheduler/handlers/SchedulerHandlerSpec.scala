@@ -1,17 +1,24 @@
 package app.softnetwork.scheduler.handlers
 
+import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence._
-import app.softnetwork.scheduler.scalatest.SchedulerTestKit
+import app.softnetwork.scheduler.message.SampleMessages.{AddSample, SampleAdded}
+import app.softnetwork.scheduler.scalatest.SchedulerWithSampleTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.message._
+import app.softnetwork.scheduler.persistence.query.SampleScheduleTriggered
+import app.softnetwork.scheduler.persistence.typed.SampleBehavior
 import org.softnetwork.akka.model.{CronTab, Schedule}
 
 import scala.concurrent.ExecutionContextExecutor
 
 /** Created by smanciot on 19/03/2020.
   */
-class SchedulerHandlerSpec extends SchedulerHandler with AnyWordSpecLike with SchedulerTestKit {
+class SchedulerHandlerSpec
+    extends SchedulerHandler
+    with AnyWordSpecLike
+    with SchedulerWithSampleTestKit {
 
   implicit lazy val system: ActorSystem[Nothing] = typedSystem()
 
@@ -19,18 +26,37 @@ class SchedulerHandlerSpec extends SchedulerHandler with AnyWordSpecLike with Sc
 
   "Scheduler" must {
     "add Cron Tab" in {
-      val cronTab = CronTab("p", ALL_KEY, "add", "* * * * *")
+      // add Sample[sample] entity
+      SampleHandler ? ("sample", AddSample) assert {
+        case SampleAdded => succeed
+        case _           => fail()
+      }
+      // add cron tab for all Sample entity
+      val cronTab = CronTab(SampleBehavior.persistenceId, ALL_KEY, "cron", "* * * * *")
       this !? AddCronTab(cronTab) assert {
         case _: CronTabAdded => succeed
         case other           => fail(other.getClass)
       }
-      this !? AddCronTab(cronTab) assert {
-        case _: CronTabAdded => succeed
-        case other           => fail(other.getClass)
+      // trigger cron tab
+      this !? TriggerCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key) assert {
+        case _: CronTabTriggered => succeed
+        case other               => fail(other.getClass)
       }
+      // a schedule for the Sample[sample] entity has been added to be triggered at the next cron job date
+      probeSampleSchedule.receiveMessage()
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
-          assert(r.scheduler.cronTabs.exists(ct => ct.uuid == cronTab.uuid))
+          val scheduler = r.scheduler
+          logger.info(scheduler.toProtoString)
+          assert(scheduler.cronTabs.exists(ct => ct.uuid == cronTab.uuid))
+          scheduler.schedules.find(s =>
+            s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key
+          ) match {
+            case Some(schedule) =>
+              assert(schedule.repeatedly.getOrElse(false))
+              assert(schedule.getScheduledDate.equals(schedule.getLastTriggered))
+            case _ => fail("schedule not found")
+          }
         case _ => fail()
       }
     }
