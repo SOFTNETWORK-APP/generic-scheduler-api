@@ -29,6 +29,7 @@ message Schedule {
     optional bool repeatedly = 5;
     optional google.protobuf.Timestamp scheduledDate = 6 [(scalapb.field).type = "java.util.Date"];
     optional google.protobuf.Timestamp lastTriggered = 7 [(scalapb.field).type = "java.util.Date"];
+    optional string cronTab = 8;
 }
 
 // CronTab

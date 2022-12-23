@@ -1,13 +1,11 @@
 package app.softnetwork.scheduler.handlers
 
-import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence._
 import app.softnetwork.scheduler.message.SampleMessages.{AddSample, SampleAdded}
 import app.softnetwork.scheduler.scalatest.SchedulerWithSampleTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.message._
-import app.softnetwork.scheduler.persistence.query.SampleScheduleTriggered
 import app.softnetwork.scheduler.persistence.typed.SampleBehavior
 import org.softnetwork.akka.model.{CronTab, Schedule}
 
@@ -25,6 +23,7 @@ class SchedulerHandlerSpec
   implicit lazy val ec: ExecutionContextExecutor = system.executionContext
 
   "Scheduler" must {
+    val cronTab = CronTab(SampleBehavior.persistenceId, ALL_KEY, "cron", "* * * * *")
     "add Cron Tab" in {
       // add Sample[sample] entity
       SampleHandler ? ("sample", AddSample) assert {
@@ -32,7 +31,6 @@ class SchedulerHandlerSpec
         case _           => fail()
       }
       // add cron tab for all Sample entity
-      val cronTab = CronTab(SampleBehavior.persistenceId, ALL_KEY, "cron", "* * * * *")
       this !? AddCronTab(cronTab) assert {
         case _: CronTabAdded => succeed
         case other           => fail(other.getClass)
@@ -55,7 +53,27 @@ class SchedulerHandlerSpec
             case Some(schedule) =>
               assert(schedule.repeatedly.getOrElse(false))
               assert(schedule.getScheduledDate.equals(schedule.getLastTriggered))
+              assert(schedule.getCronTab == cronTab.uuid)
             case _ => fail("schedule not found")
+          }
+        case _ => fail()
+      }
+    }
+    "remove Cron Tab" in {
+      this !? RemoveCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key) assert {
+        case _: CronTabRemoved => succeed
+        case other             => fail(other.getClass)
+      }
+      this !? LoadScheduler assert {
+        case r: SchedulerLoaded =>
+          val scheduler = r.scheduler
+          logger.info(scheduler.toProtoString)
+          assert(!scheduler.cronTabs.exists(ct => ct.uuid == cronTab.uuid))
+          scheduler.schedules.find(s =>
+            s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key
+          ) match {
+            case Some(_) => fail()
+            case _       => succeed
           }
         case _ => fail()
       }

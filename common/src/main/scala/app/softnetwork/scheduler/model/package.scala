@@ -103,6 +103,7 @@ package object model {
             .withKey(cronTab.key)
             .withScheduledDate(date)
             .withRepeatedly(true)
+            .withCronTab(cronTab.uuid)
         )
       case _ => None
     }

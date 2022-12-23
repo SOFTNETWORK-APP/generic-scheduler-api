@@ -377,7 +377,9 @@ private[scheduler] trait SchedulerBehavior
                         ct.entityId != ALL_KEY && ct.persistenceId == cronTab.persistenceId && ct.key == cronTab.key
                       )
                       .map(ct => CronTabRemovedEvent(ct.persistenceId, ct.entityId, ct.key))
-                      .toList
+                      .toList ++ scheduler.schedules
+                      .filter(_.getCronTab == cmd.uuid)
+                      .map(s => ScheduleRemovedEvent(s.persistenceId, s.entityId, s.key))
                   } else {
                     List.empty
                   }
