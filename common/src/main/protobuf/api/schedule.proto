@@ -13,6 +13,8 @@ option (scalapb.options) = {
 service SchedulerServiceApi {
     rpc AddSchedule (AddScheduleRequest) returns (AddScheduleResponse) {}
     rpc RemoveSchedule (RemoveScheduleRequest) returns (RemoveScheduleResponse) {}
+    rpc AddCronTab (AddCronTabRequest) returns (AddCronTabResponse) {}
+    rpc RemoveCronTab (RemoveCronTabRequest) returns (RemoveCronTabResponse) {}
 }
 
 message AddScheduleRequest{
@@ -33,3 +35,20 @@ message RemoveScheduleResponse{
     bool succeeded = 1;
 }
 
+message AddCronTabRequest{
+    org.softnetwork.akka.model.CronTab cronTab = 1;
+}
+
+message AddCronTabResponse{
+    bool succeeded = 1;
+}
+
+message RemoveCronTabRequest{
+    string persistenceId = 1;
+    string entityId = 2;
+    string key = 3;
+}
+
+message RemoveCronTabResponse{
+    bool succeeded = 1;
+}

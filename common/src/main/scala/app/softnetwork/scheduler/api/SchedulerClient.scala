@@ -4,11 +4,13 @@ import akka.actor.typed.ActorSystem
 import akka.grpc.GrpcClientSettings
 import app.softnetwork.api.server.client.{GrpcClient, GrpcClientFactory}
 import app.softnetwork.schedule.api.{
+  AddCronTabRequest,
   AddScheduleRequest,
+  RemoveCronTabRequest,
   RemoveScheduleRequest,
   SchedulerServiceApiClient
 }
-import org.softnetwork.akka.model.Schedule
+import org.softnetwork.akka.model.{CronTab, Schedule}
 
 import scala.concurrent.Future
 
@@ -25,6 +27,14 @@ trait SchedulerClient extends GrpcClient {
 
   def removeSchedule(persistenceId: String, entityId: String, key: String): Future[Boolean] = {
     grpcClient.removeSchedule(RemoveScheduleRequest(persistenceId, entityId, key)) map (_.succeeded)
+  }
+
+  def addCronTab(cronTab: CronTab): Future[Boolean] = {
+    grpcClient.addCronTab(AddCronTabRequest(Some(cronTab))) map (_.succeeded)
+  }
+
+  def removeCronTab(persistenceId: String, entityId: String, key: String): Future[Boolean] = {
+    grpcClient.removeCronTab(RemoveCronTabRequest(persistenceId, entityId, key)) map (_.succeeded)
   }
 
 }
