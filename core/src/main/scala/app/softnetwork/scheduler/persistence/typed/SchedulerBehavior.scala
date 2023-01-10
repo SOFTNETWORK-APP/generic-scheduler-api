@@ -102,9 +102,10 @@ private[scheduler] trait SchedulerBehavior
               scheduler.schedules.filter(_.scheduledDate.isDefined).foreach { schedule =>
                 context.self ! AddSchedule(schedule)
               }
-              context.log.info(
-                s"${scheduler.cronTabs.size} cron tabs and ${scheduler.schedules.size} schedules reseted"
-              )
+              if (context.log.isInfoEnabled)
+                context.log.info(
+                  s"${scheduler.cronTabs.size} cron tabs and ${scheduler.schedules.size} schedules reseted"
+                )
               trigerResetCronTabsAndSchedules(
                 scheduler,
                 switch = !scheduler.getTriggerResetCronTabsAndSchedules
@@ -137,14 +138,16 @@ private[scheduler] trait SchedulerBehavior
                 scheduler.schedules.foreach { schedule =>
                   context.self ! AddSchedule(schedule)
                 }
-                context.log.info("Scheduler reseted")
+                if (context.log.isInfoEnabled)
+                  context.log.info("Scheduler reseted")
                 SchedulerReseted ~> replyTo
               })
           case _ =>
             Effect
               .persist(SchedulerInitializedEvent(now()))
               .thenRun(_ => {
-                context.log.info("Scheduler not reseted")
+                if (context.log.isInfoEnabled)
+                  context.log.info("Scheduler not reseted")
                 SchedulerNotFound ~> replyTo
               })
         }
@@ -184,7 +187,8 @@ private[scheduler] trait SchedulerBehavior
                }
              } else {
                if (updatedSchedule.triggerable) {
-                 context.log.info(s"Triggering schedule $updatedSchedule")
+                 if (context.log.isInfoEnabled)
+                   context.log.info(s"Triggering schedule $updatedSchedule")
                  timers.startSingleTimer(
                    updatedSchedule.uuid,
                    TriggerSchedule(
@@ -194,10 +198,11 @@ private[scheduler] trait SchedulerBehavior
                    ),
                    updatedSchedule.delay.seconds
                  )
-               } else {
-                 context.log.warn(s"Schedule $updatedSchedule has not been triggered")
+               } else if (context.log.isDebugEnabled) {
+                 context.log.debug(s"Schedule $updatedSchedule has not been triggered")
                }
-               context.log.debug(s"$schedule added")
+               if (context.log.isInfoEnabled)
+                 context.log.info(s"$schedule added")
                ScheduleAdded(updatedSchedule)
              }) ~> replyTo
           })
@@ -220,7 +225,9 @@ private[scheduler] trait SchedulerBehavior
                     )
                   )
                   .thenRun(_ => {
-                    context.log.info(s"$schedule triggered at ${updatedSchedule.getLastTriggered}")
+                    if (context.log.isInfoEnabled)
+                      context.log
+                        .info(s"$schedule triggered at ${updatedSchedule.getLastTriggered}")
                     ScheduleTriggered(updatedSchedule) ~> replyTo
                   })
               case Some(schedule) if !schedule.triggerable =>
@@ -251,7 +258,8 @@ private[scheduler] trait SchedulerBehavior
                   )
                   .thenRun(_ => {
                     timers.cancel(schedule.uuid)
-                    context.log.debug(s"$schedule removed")
+                    if (context.log.isInfoEnabled)
+                      context.log.info(s"$schedule removed")
                     ScheduleRemoved(schedule) ~> replyTo
                   })
               case _ => Effect.none.thenRun(_ => ScheduleNotFound ~> replyTo)
@@ -276,7 +284,8 @@ private[scheduler] trait SchedulerBehavior
                         cronTab
                           .withCron(cmd.cronTab.cron)
                           .withNextTriggered(Timestamp.valueOf(ldt))
-                      context.log.info(s"$updatedCronTab updated")
+                      if (context.log.isInfoEnabled)
+                        context.log.info(s"$updatedCronTab updated")
                       Some(updatedCronTab)
                     case _ => None
                   }
@@ -293,12 +302,14 @@ private[scheduler] trait SchedulerBehavior
                       val updatedCronTab = cmd.cronTab
                         .withNextTriggered(Timestamp.valueOf(ldt))
                         .copy(lastTriggered = None)
-                      context.log.info(s"$updatedCronTab added")
+                      if (context.log.isInfoEnabled)
+                        context.log.info(s"$updatedCronTab added")
                       Some(updatedCronTab)
                     case _ => None
                   }
                 } else {
-                  context.log.info(s"${cmd.cronTab} added")
+                  if (context.log.isInfoEnabled)
+                    context.log.info(s"${cmd.cronTab} added")
                   Some(cmd.cronTab.copy(lastTriggered = None))
                 }
             }
@@ -312,18 +323,20 @@ private[scheduler] trait SchedulerBehavior
                     (abs(now().getTime - cronTab.getLastTriggered.getTime) * 1000 < 120 * 1000 ||
                     cronTab.getNextTriggered.getTime == cronTab.getLastTriggered.getTime)
                   if (!ignored) {
-                    context.log.info(s"Triggering cron tab $cronTab")
+                    if (context.log.isInfoEnabled)
+                      context.log.info(s"Triggering cron tab $cronTab")
                     timers.startSingleTimer(
                       cronTab.uuid,
                       TriggerCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key),
                       1.second
                     )
-                    context.log.info(s"CronTab $cronTab started at ${now()}")
-                  } else {
+                    if (context.log.isInfoEnabled)
+                      context.log.info(s"CronTab $cronTab started at ${now()}")
+                  } else if (context.log.isDebugEnabled) {
                     context.log.debug(s"CronTab $cronTab has been ignored")
                   }
                 }
-              } else {
+              } else if (context.log.isDebugEnabled) {
                 context.log.debug(s"CronTab $cronTab will not be triggered")
               }
               CronTabAdded(cronTab) ~> replyTo
@@ -358,7 +371,8 @@ private[scheduler] trait SchedulerBehavior
                     )
                   )
                   .thenRun(_ => {
-                    context.log.info(s"$cronTab triggered at ${updatedCronTab.getLastTriggered}")
+                    if (context.log.isInfoEnabled)
+                      context.log.info(s"$cronTab triggered at ${updatedCronTab.getLastTriggered}")
                     CronTabTriggered(updatedCronTab) ~> replyTo
                   })
               case _ => Effect.none.thenRun(_ => CronTabNotFound ~> replyTo)
@@ -389,7 +403,8 @@ private[scheduler] trait SchedulerBehavior
                   )
                   .thenRun(_ => {
                     timers.cancel(cronTab.uuid)
-                    context.log.info(s"$cronTab removed")
+                    if (context.log.isInfoEnabled)
+                      context.log.info(s"$cronTab removed")
                     CronTabRemoved(cronTab) ~> replyTo
                   })
               case _ => Effect.none.thenRun(_ => CronTabNotFound ~> replyTo)

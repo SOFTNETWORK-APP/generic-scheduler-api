@@ -40,7 +40,7 @@ class SchedulerHandlerSpec
         case _: CronTabTriggered => succeed
         case other               => fail(other.getClass)
       }
-      // a schedule for the Sample[sample] entity has been added to be triggered at the next cron job date
+      // a schedule for the Sample[sample] entity has been triggered at the next cron job date
       probeSampleSchedule.receiveMessage()
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
@@ -51,9 +51,11 @@ class SchedulerHandlerSpec
             s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key
           ) match {
             case Some(schedule) =>
-              assert(schedule.repeatedly.getOrElse(false))
+              assert(!schedule.repeatedly.getOrElse(false))
               assert(schedule.getScheduledDate.equals(schedule.getLastTriggered))
               assert(schedule.getCronTab == cronTab.uuid)
+              assert(!schedule.triggerable)
+              assert(schedule.removable)
             case _ => fail("schedule not found")
           }
         case _ => fail()

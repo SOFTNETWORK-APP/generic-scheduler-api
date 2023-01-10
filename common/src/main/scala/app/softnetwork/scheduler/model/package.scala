@@ -52,10 +52,10 @@ package object model {
       // the schedule can not be triggered repeatedly
       !repeatedly.getOrElse(false) &&
       // the schedule has not defined a date at which it should be triggered
-      // or it has already been triggered after the specified date
-      (scheduledDate.isEmpty || (lastTriggered.isDefined && getLastTriggered.after(
+      // or it has already been triggered at or after the specified date
+      (scheduledDate.isEmpty || (lastTriggered.isDefined && (getLastTriggered.after(
         getScheduledDate
-      )))
+      ) || getLastTriggered.equals(getScheduledDate))))
     }
   }
 
@@ -102,7 +102,7 @@ package object model {
             .withEntityId(cronTab.entityId)
             .withKey(cronTab.key)
             .withScheduledDate(date)
-            .withRepeatedly(true)
+//            .withRepeatedly(true)
             .withCronTab(cronTab.uuid)
         )
       case _ => None
