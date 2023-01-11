@@ -4,7 +4,7 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.api.server.GrpcServices
 import app.softnetwork.api.server.scalatest.ServerTestKit
-import app.softnetwork.schedule.api.SchedulerServiceApiHandler
+import app.softnetwork.scheduler.api.SchedulerServiceApiHandler
 import app.softnetwork.scheduler.launch.SchedulerGuardian
 
 import scala.concurrent.Future

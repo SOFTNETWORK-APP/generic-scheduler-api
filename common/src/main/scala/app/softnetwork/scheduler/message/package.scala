@@ -3,8 +3,12 @@ package app.softnetwork.scheduler
 import akka.actor.typed.scaladsl.TimerScheduler
 import app.softnetwork.persistence.message.{Command, CommandResult, EntityCommand, ErrorMessage}
 import app.softnetwork.scheduler.config.SchedulerSettings
+import app.softnetwork.scheduler.message.SchedulerEvents.{
+  ExternalEntityToSchedulerEvent,
+  SchedulerEventWithCommand
+}
 import app.softnetwork.scheduler.model.{CronTabItem, SchedulerItem}
-import org.softnetwork.akka.model.{CronTab, Schedule, Scheduler}
+import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
@@ -126,4 +130,16 @@ package object message {
 
   case object CronTabsAndSchedulesNotReseted
       extends SchedulerErrorMessage("CronTabsAndSchedulesNotReseted")
+
+  trait ExternalEntityToSchedulerEventDecorator extends SchedulerEventWithCommand {
+    _: ExternalEntityToSchedulerEvent =>
+    override def command: message.SchedulerCommand =
+      wrapped match {
+        case _: ExternalEntityToSchedulerEvent.Wrapped.AddSchedule    => getAddSchedule
+        case _: ExternalEntityToSchedulerEvent.Wrapped.RemoveSchedule => getRemoveSchedule
+        case _: ExternalEntityToSchedulerEvent.Wrapped.AddCronTab     => getAddCronTab
+        case _: ExternalEntityToSchedulerEvent.Wrapped.RemoveCronTab  => getRemoveCronTab
+        case _                                                        => new SchedulerCommand {}
+      }
+  }
 }

@@ -2,12 +2,17 @@ package app.softnetwork.scheduler.handlers
 
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence._
-import app.softnetwork.scheduler.message.SampleMessages.{AddSample, SampleAdded}
+import app.softnetwork.scheduler.message.SampleMessages.{
+  AddSample,
+  LoadSample,
+  SampleAdded,
+  SampleLoaded
+}
 import app.softnetwork.scheduler.scalatest.SchedulerWithSampleTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.persistence.typed.SampleBehavior
-import org.softnetwork.akka.model.{CronTab, Schedule}
+import app.softnetwork.scheduler.model.{CronTab, Schedule}
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -42,6 +47,10 @@ class SchedulerHandlerSpec
       }
       // a schedule for the Sample[sample] entity has been triggered at the next cron job date
       probeSampleSchedule.receiveMessage()
+      SampleHandler ? ("sample", LoadSample) assert {
+        case r: SampleLoaded => assert(r.sample.triggered == 1)
+        case other           => fail(other.getClass)
+      }
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
           val scheduler = r.scheduler
@@ -60,6 +69,8 @@ class SchedulerHandlerSpec
           }
         case _ => fail()
       }
+      // the schedule for the Sample[sample] entity has been removed
+      probeScheduleRemoved.receiveMessage()
     }
     "remove Cron Tab" in {
       this !? RemoveCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key) assert {

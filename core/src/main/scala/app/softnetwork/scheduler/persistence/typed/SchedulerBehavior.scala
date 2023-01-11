@@ -9,8 +9,8 @@ import app.softnetwork.persistence.typed._
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.SchedulerDao
 import app.softnetwork.scheduler.message._
-import org.softnetwork.akka.message.SchedulerEvents._
-import org.softnetwork.akka.model.{Schedule, Scheduler}
+import app.softnetwork.scheduler.message.SchedulerEvents._
+import app.softnetwork.scheduler.model.{Schedule, Scheduler}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
@@ -43,9 +43,9 @@ private[scheduler] trait SchedulerBehavior
     */
   override protected def tagEvent(entityId: String, event: SchedulerEvent): Set[String] =
     event match {
-      case e: ScheduleTriggeredEvent => Set(s"${e.schedule.persistenceId}-scheduler")
-      case e: CronTabTriggeredEvent  => Set(s"${e.cronTab.persistenceId}-scheduler")
-      case e: CronTabsResetedEvent   => Set(s"${e.persistenceId}-scheduler")
+      case e: ScheduleTriggeredEvent => Set(SchedulerSettings.tag(e.schedule.persistenceId))
+      case e: CronTabTriggeredEvent  => Set(SchedulerSettings.tag(e.cronTab.persistenceId))
+      case e: CronTabsResetedEvent   => Set(SchedulerSettings.tag(e.persistenceId))
       case _                         => super.tagEvent(entityId, event)
     }
 
@@ -83,7 +83,7 @@ private[scheduler] trait SchedulerBehavior
           )
           Effect
             .persist(
-              ResetCronTabsAndSchedulesUpdatedEvent(switch, now())
+              CronTabsAndSchedulesResetedEvent(switch, now())
             )
             .thenRun(_ => CronTabsAndSchedulesReseted ~> replyTo)
         }
@@ -473,7 +473,7 @@ private[scheduler] trait SchedulerBehavior
             )
             .getOrElse(Scheduler(schedulerId))
         )
-      case evt: ResetCronTabsAndSchedulesUpdatedEvent =>
+      case evt: CronTabsAndSchedulesResetedEvent =>
         Option(
           state
             .map(s =>
@@ -485,7 +485,7 @@ private[scheduler] trait SchedulerBehavior
         )
       case _: SchedulerInitializedEvent =>
         Some(Scheduler(schedulerId, Seq.empty, Seq.empty))
-      case _ => super.handleEvent(state, event)
+      case _ => state
     }
 }
 

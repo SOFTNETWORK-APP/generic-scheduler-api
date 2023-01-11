@@ -1,10 +1,11 @@
 syntax = "proto2";
 
 import "scalapb/scalapb.proto";
+import "message/schedule.proto";
 import "model/schedule.proto";
 import "google/protobuf/timestamp.proto";
 
-package org.softnetwork.akka.message.SchedulerEvents;
+package app.softnetwork.scheduler.message.SchedulerEvents;
 
 option (scalapb.options) = {
     single_file: true
@@ -14,24 +15,36 @@ option (scalapb.options) = {
     import: "app.softnetwork.scheduler.message._"
     import: "app.softnetwork.scheduler.model._"
     import: "app.softnetwork.protobuf.ScalaPBTypeMappers._"
-    import: "org.softnetwork.akka.model._"
+    import: "app.softnetwork.scheduler.model._"
     preamble: "sealed trait SchedulerEvent extends Event"
-    preamble: "trait SchedulerEventWrapper[E <: SchedulerEvent] extends SchedulerEvent {def event: E}"
-    preamble: "trait SchedulerEventWithCommand extends SchedulerEvent {def command: SchedulerCommand}"
+    preamble: "trait ExternalSchedulerEvent extends SchedulerEvent"
+    preamble: "trait SchedulerEventWithCommand extends ExternalSchedulerEvent {def command: SchedulerCommand}"
     preserve_unknown_fields: false
 };
 
 // Events
+message ExternalEntityToSchedulerEvent{
+    option (scalapb.message).extends = "ProtobufEvent";
+    option (scalapb.message).extends = "SchedulerEvent";
+    option (scalapb.message).extends = "ExternalEntityToSchedulerEventDecorator";
+    oneof wrapped {
+        app.softnetwork.scheduler.message.AddSchedule addSchedule = 1;
+        app.softnetwork.scheduler.message.RemoveSchedule removeSchedule = 2;
+        app.softnetwork.scheduler.message.AddCronTab addCronTab = 3;
+        app.softnetwork.scheduler.message.RemoveCronTab removeCronTab = 4;
+    }
+}
+
 message ScheduleAddedEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
-    required org.softnetwork.akka.model.Schedule schedule = 1;
+    required app.softnetwork.scheduler.model.Schedule schedule = 1;
 }
 
 message ScheduleTriggeredEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
-    required org.softnetwork.akka.model.Schedule schedule = 1;
+    required app.softnetwork.scheduler.model.Schedule schedule = 1;
 }
 
 message ScheduleRemovedEvent {
@@ -46,13 +59,13 @@ message ScheduleRemovedEvent {
 message CronTabAddedEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
-    required org.softnetwork.akka.model.CronTab cronTab = 1;
+    required app.softnetwork.scheduler.model.CronTab cronTab = 1;
 }
 
 message CronTabTriggeredEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
-    required org.softnetwork.akka.model.CronTab cronTab = 1;
+    required app.softnetwork.scheduler.model.CronTab cronTab = 1;
 }
 
 message CronTabRemovedEvent {
@@ -72,7 +85,7 @@ message CronTabsResetedEvent {
     repeated string keys = 3;
 }
 
-message ResetCronTabsAndSchedulesUpdatedEvent {
+message CronTabsAndSchedulesResetedEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
     required bool triggerResetCronTabsAndSchedules = 1;

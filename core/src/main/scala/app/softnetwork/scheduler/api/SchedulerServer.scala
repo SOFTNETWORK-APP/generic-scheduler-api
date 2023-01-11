@@ -1,7 +1,7 @@
 package app.softnetwork.scheduler.api
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.schedule.api.{
+import app.softnetwork.scheduler.api.{
   AddCronTabRequest,
   AddCronTabResponse,
   AddScheduleRequest,
