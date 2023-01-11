@@ -3,14 +3,7 @@ package app.softnetwork.scheduler.api
 import akka.actor.typed.ActorSystem
 import akka.grpc.GrpcClientSettings
 import app.softnetwork.api.server.client.{GrpcClient, GrpcClientFactory}
-import app.softnetwork.schedule.api.{
-  AddCronTabRequest,
-  AddScheduleRequest,
-  RemoveCronTabRequest,
-  RemoveScheduleRequest,
-  SchedulerServiceApiClient
-}
-import org.softnetwork.akka.model.{CronTab, Schedule}
+import app.softnetwork.scheduler.model.{CronTab, Schedule}
 
 import scala.concurrent.Future
 

@@ -1,5 +1,5 @@
 package app.softnetwork.scheduler.persistence.query
 
-import org.softnetwork.akka.model.Schedule
+import app.softnetwork.scheduler.model.Schedule
 
 case class SampleScheduleTriggered(schedule: Schedule)

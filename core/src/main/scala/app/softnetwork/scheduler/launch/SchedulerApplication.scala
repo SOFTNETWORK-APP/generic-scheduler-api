@@ -4,7 +4,7 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.api.server.launch.HealthCheckApplication
 import app.softnetwork.persistence.query.SchemaProvider
-import app.softnetwork.schedule.api.SchedulerServiceApiHandler
+import app.softnetwork.scheduler.api.SchedulerServiceApiHandler
 
 import scala.concurrent.Future
 

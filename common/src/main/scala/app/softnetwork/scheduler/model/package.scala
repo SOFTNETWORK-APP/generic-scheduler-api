@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import com.markatta.akron.CronExpression
 import com.typesafe.scalalogging.StrictLogging
-import org.softnetwork.akka.model.{CronTab, Schedule}
 
 import scala.concurrent.duration._
 import scala.language.implicitConversions

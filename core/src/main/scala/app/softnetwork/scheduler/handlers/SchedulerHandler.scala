@@ -7,7 +7,7 @@ import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.persistence.typed.CommandTypeKey
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.config.{SchedulerConfig, SchedulerSettings}
-import org.softnetwork.akka.model.{CronTab, Schedule, Scheduler}
+import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
 
 import scala.concurrent.duration.DurationInt

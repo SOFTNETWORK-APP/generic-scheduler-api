@@ -3,7 +3,7 @@ syntax = "proto3";
 import "scalapb/scalapb.proto";
 import "model/schedule.proto";
 
-package app.softnetwork.schedule.api;
+package app.softnetwork.scheduler.api;
 
 option (scalapb.options) = {
     import: "app.softnetwork.protobuf.ScalaPBTypeMappers._"
@@ -18,7 +18,7 @@ service SchedulerServiceApi {
 }
 
 message AddScheduleRequest{
-    org.softnetwork.akka.model.Schedule schedule = 1;
+    app.softnetwork.scheduler.model.Schedule schedule = 1;
 }
 
 message AddScheduleResponse{
@@ -36,7 +36,7 @@ message RemoveScheduleResponse{
 }
 
 message AddCronTabRequest{
-    org.softnetwork.akka.model.CronTab cronTab = 1;
+    app.softnetwork.scheduler.model.CronTab cronTab = 1;
 }
 
 message AddCronTabResponse{

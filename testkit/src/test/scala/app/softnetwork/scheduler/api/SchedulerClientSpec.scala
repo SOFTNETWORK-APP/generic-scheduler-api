@@ -2,7 +2,7 @@ package app.softnetwork.scheduler.api
 
 import app.softnetwork.scheduler.scalatest.SchedulerTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.softnetwork.akka.model.{CronTab, Schedule}
+import app.softnetwork.scheduler.model.{CronTab, Schedule}
 
 class SchedulerClientSpec extends AnyWordSpecLike with SchedulerTestKit with SchedulerGrpcServer {
 

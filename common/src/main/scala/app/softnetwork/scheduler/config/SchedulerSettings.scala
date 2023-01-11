@@ -19,6 +19,7 @@ object SchedulerSettings extends StrictLogging {
       case Right(schedulerConfig) => schedulerConfig
     }
 
+  def tag(persistenceId: String): String = s"scheduler-to-$persistenceId"
 }
 
 case class SchedulerConfig(
