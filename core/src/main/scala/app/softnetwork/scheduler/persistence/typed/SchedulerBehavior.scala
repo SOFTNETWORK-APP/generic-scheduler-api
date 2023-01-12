@@ -71,8 +71,7 @@ private[scheduler] trait SchedulerBehavior
   )(implicit context: ActorContext[SchedulerCommand]): Effect[SchedulerEvent, Option[Scheduler]] =
     command match {
       case cmd: ResetCronTabsAndSchedules =>
-        def trigerResetCronTabsAndSchedules(
-          scheduler: Scheduler,
+        def triggerResetCronTabsAndSchedules(
           switch: Boolean
         ): EffectBuilder[SchedulerEvent, Option[Scheduler]] = {
           implicit val system: ActorSystem[_] = context.system
@@ -96,18 +95,27 @@ private[scheduler] trait SchedulerBehavior
               ((now().getTime - scheduler.getLastCronTabsAndSchedulesReseted.getTime) >
               SchedulerSettings.SchedulerConfig.resetScheduler.delay * 1000)
             ) {
+              // add cron tabs
               scheduler.cronTabs.foreach { cronTab =>
                 context.self ! AddCronTab(cronTab)
               }
-              scheduler.schedules.filter(_.scheduledDate.isDefined).foreach { schedule =>
-                context.self ! AddSchedule(schedule)
+              // remove schedules
+              scheduler.schedules.filter(_.removable).foreach { schedule =>
+                context.self ! RemoveSchedule(
+                  schedule.persistenceId,
+                  schedule.entityId,
+                  schedule.key
+                )
+              }
+              // trigger schedules
+              scheduler.schedules.filter(_.triggerable).foreach { schedule =>
+                triggerSchedule(timers, context, schedule)
               }
               if (context.log.isInfoEnabled)
                 context.log.info(
                   s"${scheduler.cronTabs.size} cron tabs and ${scheduler.schedules.size} schedules reseted"
                 )
-              trigerResetCronTabsAndSchedules(
-                scheduler,
+              triggerResetCronTabsAndSchedules(
                 switch = !scheduler.getTriggerResetCronTabsAndSchedules
               )
             } else {
@@ -117,7 +125,7 @@ private[scheduler] trait SchedulerBehavior
               if scheduler.lastCronTabsAndSchedulesReseted.isEmpty ||
                 ((now().getTime - scheduler.getLastCronTabsAndSchedulesReseted.getTime) >
                 SchedulerSettings.SchedulerConfig.resetScheduler.delay * 1000) =>
-            trigerResetCronTabsAndSchedules(scheduler, switch = false)
+            triggerResetCronTabsAndSchedules(switch = false)
           case _ => Effect.none.thenRun(_ => CronTabsAndSchedulesNotReseted ~> replyTo)
         }
       case ResetScheduler => // add all schedules
@@ -135,9 +143,9 @@ private[scheduler] trait SchedulerBehavior
             Effect
               .persist(events)
               .thenRun(_ => {
-                scheduler.schedules.foreach { schedule =>
-                  context.self ! AddSchedule(schedule)
-                }
+//                scheduler.schedules/*.filter(_.scheduledDate.isEmpty)*/.foreach { schedule =>
+//                  context.self ! AddSchedule(schedule)
+//                }
                 if (context.log.isInfoEnabled)
                   context.log.info("Scheduler reseted")
                 SchedulerReseted ~> replyTo
@@ -186,23 +194,13 @@ private[scheduler] trait SchedulerBehavior
                  ScheduleNotAdded
                }
              } else {
+               if (context.log.isInfoEnabled)
+                 context.log.info(s"$schedule added")
                if (updatedSchedule.triggerable) {
-                 if (context.log.isInfoEnabled)
-                   context.log.info(s"Triggering schedule $updatedSchedule")
-                 timers.startSingleTimer(
-                   updatedSchedule.uuid,
-                   TriggerSchedule(
-                     updatedSchedule.persistenceId,
-                     updatedSchedule.entityId,
-                     updatedSchedule.key
-                   ),
-                   updatedSchedule.delay.seconds
-                 )
+                 triggerSchedule(timers, context, updatedSchedule)
                } else if (context.log.isDebugEnabled) {
                  context.log.debug(s"Schedule $updatedSchedule has not been triggered")
                }
-               if (context.log.isInfoEnabled)
-                 context.log.info(s"$schedule added")
                ScheduleAdded(updatedSchedule)
              }) ~> replyTo
           })
@@ -418,6 +416,26 @@ private[scheduler] trait SchedulerBehavior
         }
       case _ => super.handleCommand(entityId, state, command, replyTo, timers)
     }
+
+  private def triggerSchedule(
+    timers: TimerScheduler[SchedulerCommand],
+    context: ActorContext[SchedulerCommand],
+    schedule: Schedule
+  ): Unit = {
+    if (!timers.isTimerActive(schedule.uuid)) {
+      if (context.log.isInfoEnabled)
+        context.log.info(s"Triggering schedule $schedule")
+      timers.startSingleTimer(
+        schedule.uuid,
+        TriggerSchedule(
+          schedule.persistenceId,
+          schedule.entityId,
+          schedule.key
+        ),
+        schedule.delay.seconds
+      )
+    }
+  }
 
   /** @param state
     *   - current state

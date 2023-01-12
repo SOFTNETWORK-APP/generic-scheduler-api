@@ -7,7 +7,7 @@ import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.persistence.typed.CommandTypeKey
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.config.{SchedulerConfig, SchedulerSettings}
-import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
+import app.softnetwork.scheduler.model.Scheduler
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
 
 import scala.concurrent.duration.DurationInt
@@ -57,26 +57,6 @@ trait SchedulerDao extends Completion {
     !?(ResetCronTabsAndSchedules(resetScheduler)).map {
       case CronTabsAndSchedulesReseted => true
       case _                           => false
-    }
-  }
-
-  private[scheduler] def addSchedule(
-    schedule: Schedule
-  )(implicit system: ActorSystem[_]): Future[Boolean] = {
-    implicit val ec: ExecutionContextExecutor = system.executionContext
-    !?(AddSchedule(schedule)).map {
-      case _: ScheduleAdded => true
-      case _                => false
-    }
-  }
-
-  private[scheduler] def addCronTab(
-    cronTab: CronTab
-  )(implicit system: ActorSystem[_]): Future[Boolean] = {
-    implicit val ec: ExecutionContextExecutor = system.executionContext
-    !?(AddCronTab(cronTab)).map {
-      case _: CronTabAdded => true
-      case _               => false
     }
   }
 
