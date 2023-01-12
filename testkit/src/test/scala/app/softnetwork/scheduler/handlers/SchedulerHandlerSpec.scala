@@ -45,7 +45,7 @@ class SchedulerHandlerSpec
         case _: CronTabTriggered => succeed
         case other               => fail(other.getClass)
       }
-      // a schedule for the Sample[sample] entity has been triggered at the next cron job date
+      // a schedule for the Sample[sample] entity has been triggered
       probeSampleSchedule.receiveMessage()
       SampleHandler ? ("sample", LoadSample) assert {
         case r: SampleLoaded => assert(r.sample.triggered == 1)
@@ -59,24 +59,27 @@ class SchedulerHandlerSpec
           scheduler.schedules.find(s =>
             s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key
           ) match {
-            case Some(schedule) =>
-              assert(!schedule.repeatedly.getOrElse(false))
-              assert(schedule.getScheduledDate.equals(schedule.getLastTriggered))
-              assert(schedule.getCronTab == cronTab.uuid)
-              assert(!schedule.triggerable)
-              assert(schedule.removable)
-            case _ => fail("schedule not found")
+            case None => succeed
+            case _    => fail("schedule found")
           }
         case _ => fail()
       }
-      // the schedule for the Sample[sample] entity has been removed
-      probeScheduleRemoved.receiveMessage()
+      // a schedule for the Sample[sample] entity has been added
+      probeScheduleAdded.receiveMessage()
+      // the schedule for the Sample[sample] entity has been triggered
+      probeSampleSchedule.receiveMessage()
+      SampleHandler ? ("sample", LoadSample) assert {
+        case r: SampleLoaded => assert(r.sample.triggered == 2)
+        case other           => fail(other.getClass)
+      }
     }
     "remove Cron Tab" in {
       this !? RemoveCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key) assert {
         case _: CronTabRemoved => succeed
         case other             => fail(other.getClass)
       }
+      // the schedule for the Sample[sample] entity has been removed
+      probeScheduleRemoved.receiveMessage()
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
           val scheduler = r.scheduler

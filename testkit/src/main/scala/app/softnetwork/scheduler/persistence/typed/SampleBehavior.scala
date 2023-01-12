@@ -6,7 +6,7 @@ import akka.persistence.typed.scaladsl.Effect
 import app.softnetwork.persistence.message.{Command, CommandResult, Event}
 import app.softnetwork.persistence.typed._
 import app.softnetwork.scheduler.config.SchedulerSettings
-import app.softnetwork.scheduler.message.RemoveSchedule
+import app.softnetwork.scheduler.message.AddSchedule
 import app.softnetwork.scheduler.message.SampleMessages.{
   AddSample,
   LoadSample,
@@ -19,7 +19,7 @@ import app.softnetwork.scheduler.message.SampleMessages.{
   TriggerSample
 }
 import app.softnetwork.scheduler.message.SchedulerEvents.ExternalEntityToSchedulerEvent
-import app.softnetwork.scheduler.model.Sample
+import app.softnetwork.scheduler.model.{Sample, Schedule}
 
 trait SampleBehavior extends EntityBehavior[Command, Sample, Event, CommandResult] {
   override def persistenceId: String = "Sample"
@@ -48,11 +48,14 @@ trait SampleBehavior extends EntityBehavior[Command, Sample, Event, CommandResul
             List(
               SampleTriggeredEvent(state.map(_.triggered + 1).getOrElse(1)),
               ExternalEntityToSchedulerEvent(
-                ExternalEntityToSchedulerEvent.Wrapped.RemoveSchedule(
-                  RemoveSchedule(
-                    persistenceId,
-                    entityId,
-                    cmd.key
+                ExternalEntityToSchedulerEvent.Wrapped.AddSchedule(
+                  AddSchedule(
+                    Schedule(
+                      persistenceId,
+                      entityId,
+                      cmd.key,
+                      1
+                    )
                   )
                 )
               )

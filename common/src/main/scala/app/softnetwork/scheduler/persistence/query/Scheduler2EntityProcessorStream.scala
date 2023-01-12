@@ -5,7 +5,6 @@ import akka.persistence.typed.PersistenceId
 import app.softnetwork.persistence.message.{Command, CommandResult}
 import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider}
 import app.softnetwork.persistence.typed.scaladsl.EntityPattern
-import app.softnetwork.scheduler.handlers.SchedulerDao
 import app.softnetwork.scheduler.message.SchedulerEvents.{
   CronTabTriggeredEvent,
   CronTabsResetedEvent,
@@ -21,8 +20,6 @@ import scala.concurrent.Future
 trait Scheduler2EntityProcessorStream[C <: Command, R <: CommandResult]
     extends EventProcessorStream[SchedulerEvent] {
   _: JournalProvider with EntityPattern[C, R] =>
-
-  def schedulerDao: SchedulerDao = SchedulerDao
 
   def forTests: Boolean = false
 
@@ -49,11 +46,7 @@ trait Scheduler2EntityProcessorStream[C <: Command, R <: CommandResult]
             if (persistenceId.startsWith(schedule.persistenceId)) {
               val entityId = persistenceId.split("\\|").last
               if (entityId != ALL_KEY) {
-                if (forTests) {
-                  schedulerDao.addSchedule(schedule.withEntityId(entityId).withDelay(1))
-                } else {
-                  schedulerDao.addSchedule(schedule.withEntityId(entityId))
-                }
+                triggerSchedule(schedule.withEntityId(entityId))
               } else {
                 Future.successful(true)
               }
@@ -80,11 +73,7 @@ trait Scheduler2EntityProcessorStream[C <: Command, R <: CommandResult]
                 if (persistenceId.startsWith(cronTab.persistenceId)) {
                   val entityId = persistenceId.split("\\|").last
                   if (entityId != ALL_KEY) {
-                    if (forTests) {
-                      schedulerDao.addSchedule(schedule.withEntityId(entityId).withDelay(1))
-                    } else {
-                      schedulerDao.addSchedule(schedule.withEntityId(entityId))
-                    }
+                    triggerSchedule(schedule.withEntityId(entityId))
                   } else {
                     Future.successful(true)
                   }
