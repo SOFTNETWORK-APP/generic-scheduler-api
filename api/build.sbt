@@ -28,5 +28,6 @@ organization := "app.softnetwork.scheduler"
 name := "scheduler-api"
 
 libraryDependencies ++= Seq(
-  "app.softnetwork.persistence" %% "akka-persistence-jdbc" % Versions.genericPersistence
+  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence,
+  "com.lightbend.akka" %% "akka-persistence-jdbc" % Versions.akkaPersistenceJdbc
 )
