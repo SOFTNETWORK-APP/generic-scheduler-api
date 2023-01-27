@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "scalapb/scalapb.proto";
+import "google/protobuf/wrappers.proto";
 import "model/schedule.proto";
 
 package app.softnetwork.scheduler.api;
@@ -15,6 +16,7 @@ service SchedulerServiceApi {
     rpc RemoveSchedule (RemoveScheduleRequest) returns (RemoveScheduleResponse) {}
     rpc AddCronTab (AddCronTabRequest) returns (AddCronTabResponse) {}
     rpc RemoveCronTab (RemoveCronTabRequest) returns (RemoveCronTabResponse) {}
+    rpc LoadScheduler (LoadSchedulerRequest) returns (LoadSchedulerResponse) {}
 }
 
 message AddScheduleRequest{
@@ -51,4 +53,12 @@ message RemoveCronTabRequest{
 
 message RemoveCronTabResponse{
     bool succeeded = 1;
+}
+
+message LoadSchedulerRequest{
+    google.protobuf.StringValue schedulerId = 1;
+}
+
+message LoadSchedulerResponse{
+    app.softnetwork.scheduler.model.Scheduler scheduler = 1;
 }

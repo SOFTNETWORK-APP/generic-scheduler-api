@@ -1,27 +1,18 @@
 package app.softnetwork.scheduler.api
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.scheduler.api.{
-  AddCronTabRequest,
-  AddCronTabResponse,
-  AddScheduleRequest,
-  AddScheduleResponse,
-  RemoveCronTabRequest,
-  RemoveCronTabResponse,
-  RemoveScheduleRequest,
-  RemoveScheduleResponse,
-  SchedulerServiceApi
-}
 import app.softnetwork.scheduler.handlers.SchedulerHandler
 import app.softnetwork.scheduler.message.{
   AddCronTab,
   AddSchedule,
   CronTabAdded,
   CronTabRemoved,
+  LoadScheduler,
   RemoveCronTab,
   RemoveSchedule,
   ScheduleAdded,
-  ScheduleRemoved
+  ScheduleRemoved,
+  SchedulerLoaded
 }
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -64,6 +55,21 @@ trait SchedulerServer extends SchedulerServiceApi with SchedulerHandler {
     !?(RemoveCronTab(in.persistenceId, in.entityId, in.key)) map {
       case _: CronTabRemoved => RemoveCronTabResponse(true)
       case _                 => RemoveCronTabResponse()
+    }
+  }
+
+  override def loadScheduler(in: LoadSchedulerRequest): Future[LoadSchedulerResponse] = {
+    in.schedulerId match {
+      case Some(value) =>
+        ??(value, LoadScheduler) map {
+          case r: SchedulerLoaded => LoadSchedulerResponse(Some(r.scheduler))
+          case _                  => LoadSchedulerResponse()
+        }
+      case None =>
+        !?(LoadScheduler) map {
+          case r: SchedulerLoaded => LoadSchedulerResponse(Some(r.scheduler))
+          case _                  => LoadSchedulerResponse()
+        }
     }
   }
 }
