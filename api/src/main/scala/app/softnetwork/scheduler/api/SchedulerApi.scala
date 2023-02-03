@@ -1,15 +1,15 @@
 package app.softnetwork.scheduler.api
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.persistence.jdbc.query.JdbcSchema.SchemaType
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.persistence.jdbc.query.{JdbcJournalProvider, JdbcSchema, JdbcSchemaProvider}
 import app.softnetwork.scheduler.handlers.SchedulerHandler
 import app.softnetwork.scheduler.launch.SchedulerApplication
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
 
-trait SchedulerApi extends SchedulerApplication with JdbcSchemaProvider {
+import scala.concurrent.Future
 
-  def jdbcSchemaType: SchemaType = this.schemaType
+trait SchedulerApi extends SchedulerApplication with JdbcSchemaProvider {
 
   override def entity2SchedulerProcessorStream: ActorSystem[_] => Entity2SchedulerProcessorStream =
     sys =>
@@ -17,9 +17,13 @@ trait SchedulerApi extends SchedulerApplication with JdbcSchemaProvider {
         with SchedulerHandler
         with JdbcJournalProvider
         with JdbcSchemaProvider {
-        override lazy val schemaType: JdbcSchema.SchemaType = jdbcSchemaType
+        override lazy val schemaType: JdbcSchema.SchemaType = SchedulerApi.this.schemaType
 
         override implicit def system: ActorSystem[_] = sys
       }
+
+  override def grpcServices
+    : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] = system =>
+    Seq(SchedulerServiceApiHandler.partial(schedulerServer(system))(system))
 
 }

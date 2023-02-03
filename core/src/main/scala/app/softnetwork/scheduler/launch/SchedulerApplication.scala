@@ -1,18 +1,8 @@
 package app.softnetwork.scheduler.launch
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import app.softnetwork.api.server.launch.HealthCheckApplication
+import app.softnetwork.api.server.launch.Application
 import app.softnetwork.persistence.query.SchemaProvider
-import app.softnetwork.scheduler.api.SchedulerServiceApiHandler
 
-import scala.concurrent.Future
-
-trait SchedulerApplication extends HealthCheckApplication with SchedulerGuardian {
+trait SchedulerApplication extends Application with SchedulerRoutes {
   _: SchemaProvider =>
-
-  override def grpcServices
-    : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] = system =>
-    Seq(SchedulerServiceApiHandler.partial(schedulerServer(system))(system))
-
 }

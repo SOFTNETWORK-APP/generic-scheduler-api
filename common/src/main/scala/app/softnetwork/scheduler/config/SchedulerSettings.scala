@@ -19,6 +19,8 @@ object SchedulerSettings extends StrictLogging {
       case Right(schedulerConfig) => schedulerConfig
     }
 
+  val SchedulerPath: String = config.getString("softnetwork.scheduler.path")
+
   def tag(persistenceId: String): String = s"scheduler-to-$persistenceId"
 }
 

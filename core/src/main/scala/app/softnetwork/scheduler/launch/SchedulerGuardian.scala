@@ -11,11 +11,12 @@ import app.softnetwork.scheduler.persistence.query.{
   Scheduler2EntityProcessorStream
 }
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
+import app.softnetwork.session.launch.SessionGuardian
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.util.{Failure, Success, Try}
 
-trait SchedulerGuardian extends PersistenceGuardian with StrictLogging {
+trait SchedulerGuardian extends SessionGuardian with StrictLogging {
   _: SchemaProvider =>
 
   def schedulerEntities: ActorSystem[_] => Seq[PersistentEntity[_, _, _, _]] = _ =>
@@ -25,7 +26,8 @@ trait SchedulerGuardian extends PersistenceGuardian with StrictLogging {
 
   /** initialize all entities
     */
-  override def entities: ActorSystem[_] => Seq[PersistentEntity[_, _, _, _]] = schedulerEntities
+  override def entities: ActorSystem[_] => Seq[PersistentEntity[_, _, _, _]] = system =>
+    sessionEntities(system) ++ schedulerEntities(system)
 
   def entity2SchedulerProcessorStream: ActorSystem[_] => Entity2SchedulerProcessorStream
 
