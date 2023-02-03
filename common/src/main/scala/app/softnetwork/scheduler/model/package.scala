@@ -56,6 +56,8 @@ package object model {
         getScheduledDate
       ) || getLastTriggered.equals(getScheduledDate))))
     }
+
+    def view: ScheduleView = ScheduleView(this)
   }
 
   trait CronTabItem extends StrictLogging {

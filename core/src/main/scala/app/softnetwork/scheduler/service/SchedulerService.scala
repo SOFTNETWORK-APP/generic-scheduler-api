@@ -86,6 +86,17 @@ trait SchedulerService
           case _ => complete(HttpResponse(StatusCodes.BadRequest))
         }
       }
+    } ~ get {
+      loadScheduler() completeWith {
+        case Some(s) =>
+          complete(
+            HttpResponse(
+              StatusCodes.OK,
+              entity = s.schedules.map(_.view).toList
+            )
+          )
+        case _ => complete(HttpResponse(StatusCodes.NotFound))
+      }
     }
   }
 
