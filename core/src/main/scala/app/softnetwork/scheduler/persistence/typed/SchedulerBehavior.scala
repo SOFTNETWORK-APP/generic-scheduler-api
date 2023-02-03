@@ -101,6 +101,8 @@ private[scheduler] trait SchedulerBehavior
               }
               // remove schedules
               scheduler.schedules.filter(_.removable).foreach { schedule =>
+                if (context.log.isInfoEnabled)
+                  context.log.info(s"About to remove schedule $schedule")
                 context.self ! RemoveSchedule(
                   schedule.persistenceId,
                   schedule.entityId,
@@ -109,6 +111,8 @@ private[scheduler] trait SchedulerBehavior
               }
               // trigger schedules
               scheduler.schedules.filter(_.triggerable).foreach { schedule =>
+                if (context.log.isInfoEnabled)
+                  context.log.info(s"About to trigger schedule $schedule")
                 triggerSchedule(timers, context, schedule)
               }
               if (context.log.isInfoEnabled)
@@ -434,6 +438,11 @@ private[scheduler] trait SchedulerBehavior
         ),
         schedule.delay.seconds
       )
+    } else {
+      if (context.log.isWarnEnabled)
+        context.log.warn(
+          s"Schedule $schedule not triggered because a timer is already active for ${schedule.uuid}"
+        )
     }
   }
 
