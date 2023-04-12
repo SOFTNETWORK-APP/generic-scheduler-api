@@ -6,9 +6,9 @@ object Versions {
 
   val akkaPersistenceJdbc = "5.0.4"
 
-  val server = "0.2.8"
+  val server = "0.2.9"
 
-  val session = "0.1.3"
+  val session = "0.1.4"
 
   val scalatest = "3.1.1"
 }
