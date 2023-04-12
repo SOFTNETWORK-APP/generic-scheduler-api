@@ -2,7 +2,7 @@ package app.softnetwork.sbt.build
 
 object Versions {
 
-  val genericPersistence = "0.2.6.1"
+  val genericPersistence = "0.2.6.2"
 
   val akkaPersistenceJdbc = "5.0.4"
 
