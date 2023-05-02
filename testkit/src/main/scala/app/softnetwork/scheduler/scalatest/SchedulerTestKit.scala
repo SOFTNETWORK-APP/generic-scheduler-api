@@ -15,6 +15,7 @@ import app.softnetwork.scheduler.message.{
 }
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
 import org.scalatest.Suite
+import org.slf4j.{Logger, LoggerFactory}
 
 trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit {
   _: Suite =>
@@ -30,11 +31,12 @@ trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit
         with SchedulerHandler
         with InMemoryJournalProvider
         with InMemoryOffsetProvider {
+        lazy val log: Logger = LoggerFactory getLogger getClass.getName
         override protected val forTests: Boolean = true
 
         override implicit def system: ActorSystem[_] = sys
 
-        logger.info(tag)
+        log.info(tag)
       }
 
   val probeScheduleAdded: TestProbe[ScheduleAdded] = createTestProbe[ScheduleAdded]()

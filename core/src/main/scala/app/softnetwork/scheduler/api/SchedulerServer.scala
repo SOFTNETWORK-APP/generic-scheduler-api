@@ -14,6 +14,7 @@ import app.softnetwork.scheduler.message.{
   ScheduleRemoved,
   SchedulerLoaded
 }
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -78,6 +79,7 @@ object SchedulerServer {
   def apply(sys: ActorSystem[_]): SchedulerServer = {
     new SchedulerServer {
       override implicit val system: ActorSystem[_] = sys
+      lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
   }
 }

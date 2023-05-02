@@ -13,6 +13,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.persistence.typed.SampleBehavior
 import app.softnetwork.scheduler.model.{CronTab, Schedule}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -22,6 +23,8 @@ class SchedulerHandlerSpec
     extends SchedulerHandler
     with AnyWordSpecLike
     with SchedulerWithSampleTestKit {
+
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   implicit lazy val system: ActorSystem[Nothing] = typedSystem()
 
@@ -54,7 +57,7 @@ class SchedulerHandlerSpec
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
           val scheduler = r.scheduler
-          logger.info(scheduler.toProtoString)
+          log.info(scheduler.toProtoString)
           assert(scheduler.cronTabs.exists(ct => ct.uuid == cronTab.uuid))
           scheduler.schedules.find(s =>
             s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key
@@ -83,7 +86,7 @@ class SchedulerHandlerSpec
       this !? LoadScheduler assert {
         case r: SchedulerLoaded =>
           val scheduler = r.scheduler
-          logger.info(scheduler.toProtoString)
+          log.info(scheduler.toProtoString)
           assert(!scheduler.cronTabs.exists(ct => ct.uuid == cronTab.uuid))
           scheduler.schedules.find(s =>
             s.persistenceId == SampleBehavior.persistenceId && s.entityId == "sample" && s.key == cronTab.key

@@ -29,6 +29,7 @@ import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.jackson.Serialization
 import org.json4s.{jackson, Formats}
+import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
 trait SchedulerService
@@ -160,6 +161,7 @@ object SchedulerService {
   def apply(sys: ActorSystem[_]): SchedulerService = {
     new SchedulerService {
       override implicit def system: ActorSystem[_] = sys
+      lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
   }
 }

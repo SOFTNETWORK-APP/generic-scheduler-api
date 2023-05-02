@@ -24,11 +24,7 @@ trait SchedulerTypeKey extends CommandTypeKey[SchedulerCommand] {
 
 trait SchedulerHandler
     extends EntityPattern[SchedulerCommand, SchedulerCommandResult]
-    with SchedulerTypeKey {
-  lazy val log: Logger = LoggerFactory getLogger getClass.getName
-}
-
-object SchedulerHandler extends SchedulerHandler
+    with SchedulerTypeKey
 
 trait SchedulerDao extends Completion {
   _: SchedulerHandler =>
@@ -83,4 +79,6 @@ trait SchedulerDao extends Completion {
 
 }
 
-object SchedulerDao extends SchedulerDao with SchedulerHandler
+object SchedulerDao extends SchedulerDao with SchedulerHandler {
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
+}
