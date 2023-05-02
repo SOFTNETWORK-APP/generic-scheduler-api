@@ -3,7 +3,7 @@ package app.softnetwork.scheduler.persistence.query
 import akka.Done
 import akka.persistence.typed.PersistenceId
 import app.softnetwork.persistence.message.{Command, CommandResult}
-import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider}
+import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider, OffsetProvider}
 import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.scheduler.message.SchedulerEvents.{
   CronTabTriggeredEvent,
@@ -19,7 +19,7 @@ import scala.concurrent.Future
   */
 trait Scheduler2EntityProcessorStream[C <: Command, R <: CommandResult]
     extends EventProcessorStream[SchedulerEvent] {
-  _: JournalProvider with EntityPattern[C, R] =>
+  _: JournalProvider with OffsetProvider with EntityPattern[C, R] =>
 
   def forTests: Boolean = false
 

@@ -9,6 +9,7 @@ import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.config.{SchedulerConfig, SchedulerSettings}
 import app.softnetwork.scheduler.model.Scheduler
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -23,7 +24,9 @@ trait SchedulerTypeKey extends CommandTypeKey[SchedulerCommand] {
 
 trait SchedulerHandler
     extends EntityPattern[SchedulerCommand, SchedulerCommandResult]
-    with SchedulerTypeKey
+    with SchedulerTypeKey {
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
+}
 
 object SchedulerHandler extends SchedulerHandler
 

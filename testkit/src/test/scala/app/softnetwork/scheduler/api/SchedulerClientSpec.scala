@@ -3,10 +3,13 @@ package app.softnetwork.scheduler.api
 import app.softnetwork.scheduler.scalatest.SchedulerTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.{Failure, Success}
 
 class SchedulerClientSpec extends AnyWordSpecLike with SchedulerTestKit with SchedulerGrpcServer {
+
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   lazy val client: SchedulerClient = SchedulerClient(typedSystem())
 

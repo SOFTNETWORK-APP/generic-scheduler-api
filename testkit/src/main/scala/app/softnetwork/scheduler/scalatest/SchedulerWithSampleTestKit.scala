@@ -4,7 +4,7 @@ import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.launch
 import app.softnetwork.persistence.launch.PersistenceGuardian._
-import app.softnetwork.persistence.query.InMemoryJournalProvider
+import app.softnetwork.persistence.query.{InMemoryJournalProvider, InMemoryOffsetProvider}
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.persistence.query.{
   SampleScheduleTriggered,
@@ -21,10 +21,14 @@ trait SchedulerWithSampleTestKit extends SchedulerTestKit { _: Suite =>
   override def scheduler2EntityProcessorStreams
     : ActorSystem[_] => Seq[Scheduler2EntityProcessorStream[_, _]] =
     sys =>
-      Seq(new SchedulerToSampleProcessorStream with InMemoryJournalProvider {
-        override implicit def system: ActorSystem[_] = sys
-        override val tag: String = SchedulerSettings.tag(SampleBehavior.persistenceId)
-      })
+      Seq(
+        new SchedulerToSampleProcessorStream
+          with InMemoryJournalProvider
+          with InMemoryOffsetProvider {
+          override implicit def system: ActorSystem[_] = sys
+          override val tag: String = SchedulerSettings.tag(SampleBehavior.persistenceId)
+        }
+      )
 
   val probeSampleSchedule: TestProbe[SampleScheduleTriggered] =
     createTestProbe[SampleScheduleTriggered]()

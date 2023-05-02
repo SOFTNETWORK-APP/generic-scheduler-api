@@ -2,7 +2,7 @@ package app.softnetwork.scheduler.persistence.query
 
 import akka.actor.typed.eventstream.EventStream.Publish
 import app.softnetwork.persistence.message.{Command, CommandResult}
-import app.softnetwork.persistence.query.JournalProvider
+import app.softnetwork.persistence.query.{JournalProvider, OffsetProvider}
 import app.softnetwork.scheduler.handlers.SampleHandler
 import app.softnetwork.scheduler.message.SampleMessages.{SampleTriggered, TriggerSample}
 import app.softnetwork.scheduler.model.Schedule
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 trait SchedulerToSampleProcessorStream
     extends Scheduler2EntityProcessorStream[Command, CommandResult]
     with SampleHandler {
-  _: JournalProvider =>
+  _: JournalProvider with OffsetProvider =>
 
   override def forTests: Boolean = true
 

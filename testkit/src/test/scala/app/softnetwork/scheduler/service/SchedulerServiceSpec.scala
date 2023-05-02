@@ -5,11 +5,14 @@ import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.scheduler.scalatest.SchedulerRouteTestKit
 import app.softnetwork.serialization
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success, Try}
 
 class SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit {
+
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   implicit lazy val asystem: ActorSystem[Nothing] = typedSystem()
 

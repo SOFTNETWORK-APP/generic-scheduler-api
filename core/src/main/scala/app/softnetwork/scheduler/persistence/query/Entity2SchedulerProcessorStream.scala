@@ -3,7 +3,7 @@ package app.softnetwork.scheduler.persistence.query
 import akka.Done
 import akka.actor.typed.eventstream.EventStream.Publish
 import akka.persistence.typed.PersistenceId
-import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider}
+import app.softnetwork.persistence.query.{EventProcessorStream, JournalProvider, OffsetProvider}
 import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.message.SchedulerEvents.SchedulerEventWithCommand
@@ -12,7 +12,9 @@ import app.softnetwork.scheduler.message._
 import scala.concurrent.Future
 
 trait Entity2SchedulerProcessorStream extends EventProcessorStream[SchedulerEventWithCommand] {
-  _: JournalProvider with EntityPattern[SchedulerCommand, SchedulerCommandResult] =>
+  _: JournalProvider
+    with OffsetProvider
+    with EntityPattern[SchedulerCommand, SchedulerCommandResult] =>
 
   override lazy val tag: String =
     SchedulerSettings.SchedulerConfig.eventStreams.entityToSchedulerTag
@@ -36,13 +38,13 @@ trait Entity2SchedulerProcessorStream extends EventProcessorStream[SchedulerEven
   ): Future[Done] = {
     (this !? event.command).map {
       case r: ScheduleNotFound.type =>
-        logger.warn(s"${event.command} -> ${r.message}")
+        log.warn(s"${event.command} -> ${r.message}")
         Done
       case r: CronTabNotFound.type =>
-        logger.warn(s"${event.command} -> ${r.message}")
+        log.warn(s"${event.command} -> ${r.message}")
         Done
       case r: SchedulerErrorMessage =>
-        logger.error(s"${event.command} -> ${r.message}")
+        log.error(s"${event.command} -> ${r.message}")
         throw new Throwable(s"${event.command} -> ${r.message}")
       case result =>
         if (forTests) {

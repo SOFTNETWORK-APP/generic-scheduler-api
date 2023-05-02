@@ -2,7 +2,7 @@ package app.softnetwork.scheduler.scalatest
 
 import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorSystem
-import app.softnetwork.persistence.query.InMemoryJournalProvider
+import app.softnetwork.persistence.query.{InMemoryJournalProvider, InMemoryOffsetProvider}
 import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.SchedulerHandler
@@ -26,7 +26,10 @@ trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit
 
   override def entity2SchedulerProcessorStream: ActorSystem[_] => Entity2SchedulerProcessorStream =
     sys =>
-      new Entity2SchedulerProcessorStream with SchedulerHandler with InMemoryJournalProvider {
+      new Entity2SchedulerProcessorStream
+        with SchedulerHandler
+        with InMemoryJournalProvider
+        with InMemoryOffsetProvider {
         override protected val forTests: Boolean = true
 
         override implicit def system: ActorSystem[_] = sys
