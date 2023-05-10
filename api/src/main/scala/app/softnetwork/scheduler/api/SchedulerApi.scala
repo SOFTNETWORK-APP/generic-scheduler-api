@@ -3,7 +3,7 @@ package app.softnetwork.scheduler.api
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.persistence.jdbc.query.{JdbcJournalProvider, JdbcOffsetProvider}
-import app.softnetwork.persistence.jdbc.schema.JdbcSchemaProvider
+import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.handlers.SchedulerHandler
 import app.softnetwork.scheduler.launch.SchedulerApplication
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
@@ -11,7 +11,7 @@ import com.typesafe.config.Config
 
 import scala.concurrent.Future
 
-trait SchedulerApi extends SchedulerApplication with JdbcSchemaProvider {
+trait SchedulerApi extends SchedulerApplication {_: SchemaProvider =>
 
   override def entity2SchedulerProcessorStream: ActorSystem[_] => Entity2SchedulerProcessorStream =
     sys =>
