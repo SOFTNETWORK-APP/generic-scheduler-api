@@ -4,8 +4,7 @@ import app.softnetwork.persistence.jdbc.schema.{JdbcSchemaProvider, JdbcSchemaTy
 import app.softnetwork.persistence.schema.SchemaType
 import org.slf4j.{Logger, LoggerFactory}
 
-object SchedulerPostgresLauncher extends SchedulerApi with JdbcSchemaProvider {
-
+object SwaggerSchedulerPostgresLauncher extends SwaggerSchedulerApi with JdbcSchemaProvider {
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   def schemaType: SchemaType = JdbcSchemaTypes.Postgres

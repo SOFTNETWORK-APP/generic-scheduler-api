@@ -11,7 +11,7 @@ import com.typesafe.config.Config
 
 import scala.concurrent.Future
 
-trait SchedulerApi extends SchedulerApplication {_: SchemaProvider =>
+trait SchedulerApi extends SchedulerApplication { _: SchemaProvider =>
 
   override def entity2SchedulerProcessorStream: ActorSystem[_] => Entity2SchedulerProcessorStream =
     sys =>

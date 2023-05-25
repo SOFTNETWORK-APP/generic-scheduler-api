@@ -1,7 +1,7 @@
 import app.softnetwork.sbt.build.Versions
 import com.typesafe.sbt.packager.docker._
 
-Compile / mainClass := Some("app.softnetwork.scheduler.api.SchedulerPostgresLauncher")
+Compile / mainClass := Some("app.softnetwork.scheduler.api.SwaggerSchedulerPostgresLauncher")
 
 dockerBaseImage := "openjdk:8"
 
@@ -28,6 +28,5 @@ organization := "app.softnetwork.scheduler"
 name := "scheduler-api"
 
 libraryDependencies ++= Seq(
-  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence,
-  "com.lightbend.akka" %% "akka-persistence-jdbc" % Versions.akkaPersistenceJdbc
+  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence
 )

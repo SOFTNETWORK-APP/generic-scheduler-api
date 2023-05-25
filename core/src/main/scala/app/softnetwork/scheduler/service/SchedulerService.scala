@@ -23,7 +23,7 @@ import app.softnetwork.scheduler.message.{
 import app.softnetwork.scheduler.model._
 import app.softnetwork.serialization._
 import app.softnetwork.session.service.SessionService
-import com.softwaremill.session.CsrfDirectives.randomTokenCsrfProtection
+import com.softwaremill.session.CsrfDirectives.hmacTokenCsrfProtection
 import com.softwaremill.session.CsrfOptions.checkHeader
 import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
@@ -51,7 +51,7 @@ trait SchedulerService
   val route: Route = {
     pathPrefix(SchedulerSettings.SchedulerPath) {
       // check anti CSRF token
-      randomTokenCsrfProtection(checkHeader) {
+      hmacTokenCsrfProtection(checkHeader) {
         // check if a session exists
         _requiredSession(ec) { session =>
           // only administrators should be allowed to access this resource
