@@ -1,5 +1,0 @@
-package app.softnetwork.scheduler.service
-
-import app.softnetwork.scheduler.scalatest.SchedulerEndpointsTestKit
-
-class SchedulerServiceEndpointsSpec extends SchedulerServiceSpec with SchedulerEndpointsTestKit

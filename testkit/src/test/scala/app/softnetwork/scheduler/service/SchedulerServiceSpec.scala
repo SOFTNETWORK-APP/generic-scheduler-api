@@ -4,6 +4,7 @@ import akka.actor.typed.ActorSystem
 import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.scheduler.scalatest.SchedulerRouteTestKit
 import app.softnetwork.serialization
+import app.softnetwork.session.config.Settings
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -32,6 +33,8 @@ class SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit {
       |  "scheduledDate": "2023-02-03T17:10:09.149Z"
       |}""".stripMargin
 
+  override val refreshableSession: Boolean = false
+
   "scheduler service" must {
     "add schedule" in {
       createSession("admin", admin = Some(true))
@@ -59,4 +62,6 @@ class SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit {
       removeCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key)
     }
   }
+
+  override def sessionHeaderName: String = Settings.Session.CookieName
 }

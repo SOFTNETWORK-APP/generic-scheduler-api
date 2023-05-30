@@ -1,29 +1,21 @@
 package app.softnetwork.scheduler.scalatest
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.scheduler.launch.SchedulerEndpoints
-import app.softnetwork.scheduler.service.{
-  OneOffCookieSchedulerServiceEndpoints,
-  SchedulerServiceEndpoints
-}
-import app.softnetwork.session.scalatest.{
-  OneOffCookieSessionServiceEndpoints,
-  SessionServiceEndpoints
-}
+import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
+import app.softnetwork.session.scalatest.SessionServiceEndpointsRoutes
+import com.softwaremill.session.CsrfCheck
 import org.scalatest.Suite
 import sttp.tapir.server.ServerEndpoint
 
 import scala.concurrent.Future
 
-trait SchedulerEndpointsTestKit extends SchedulerRouteTestKit with SchedulerEndpoints { _: Suite =>
+trait SchedulerEndpointsTestKit extends SchedulerRouteTestKit with SessionServiceEndpointsRoutes {
+  _: Suite with CsrfCheck =>
 
-  def sessionServiceEndpoints: ActorSystem[_] => SessionServiceEndpoints = system =>
-    OneOffCookieSessionServiceEndpoints(system)
-
-  def schedulerServiceEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
-    OneOffCookieSchedulerServiceEndpoints(system)
+  def schedulerEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
+    SchedulerServiceEndpoints.apply(system, sessionEndpoints(system))
 
   override def endpoints: ActorSystem[_] => List[ServerEndpoint[Any, Future]] = system =>
-    sessionServiceEndpoints(system).endpoints ++ schedulerServiceEndpoints(system).endpoints
+    sessionServiceEndpoints(system).endpoints ++ schedulerEndpoints(system).endpoints
 
 }

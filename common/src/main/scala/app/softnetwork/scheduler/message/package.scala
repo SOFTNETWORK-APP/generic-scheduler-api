@@ -116,7 +116,7 @@ package object message {
       extends ErrorMessage(message)
       with SchedulerCommandResult
 
-  case object AuthenticationError extends SchedulerErrorMessage("AuthenticationError")
+  case object UnauthorizedError extends SchedulerErrorMessage("Unauthorized")
 
   case object SchedulerNotFound extends SchedulerErrorMessage("SchedulerNotFound")
 
