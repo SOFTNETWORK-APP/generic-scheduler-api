@@ -2,15 +2,13 @@ package app.softnetwork.scheduler.scalatest
 
 import akka.actor.typed.ActorSystem
 import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
-import app.softnetwork.session.scalatest.SessionServiceEndpointsRoutes
+import app.softnetwork.session.scalatest.SessionEndpointsRoutes
 import com.softwaremill.session.CsrfCheck
-import org.scalatest.Suite
 import sttp.tapir.server.ServerEndpoint
 
 import scala.concurrent.Future
 
-trait SchedulerEndpointsTestKit extends SchedulerRouteTestKit with SessionServiceEndpointsRoutes {
-  _: Suite with CsrfCheck =>
+trait SchedulerEndpointsTestKit extends SessionEndpointsRoutes { _: CsrfCheck =>
 
   def schedulerEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
     SchedulerServiceEndpoints.apply(system, sessionEndpoints(system))

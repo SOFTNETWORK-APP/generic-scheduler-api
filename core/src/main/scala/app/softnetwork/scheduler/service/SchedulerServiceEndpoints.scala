@@ -39,7 +39,7 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    SchedulerCommandResult,
+    UnauthorizedError.type,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
     Any,
     Future
@@ -48,22 +48,10 @@ trait SchedulerServiceEndpoints
       .in(SchedulerSettings.SchedulerPath)
       .out(sessionEndpoints.antiCsrfWithRequiredSession.securityOutput)
       .errorOut(
-        oneOf[SchedulerCommandResult](
-          oneOfVariant[SchedulerNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(emptyOutputAs(SchedulerNotFound).description("Scheduler not found"))
-          ),
-          oneOfVariant[ScheduleNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(emptyOutputAs(ScheduleNotFound).description("Schedule not found"))
-          ),
-          oneOfVariant[CronTabNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(emptyOutputAs(CronTabNotFound).description("Cron tab not found"))
-          ),
+        oneOf[UnauthorizedError.type](
           oneOfVariant[UnauthorizedError.type](
             statusCode(StatusCode.Unauthorized)
-              .and(emptyOutputAs(UnauthorizedError).description("Unauthorized"))
+              .and(jsonBody[UnauthorizedError.type].description("Unauthorized"))
           )
         )
       )
@@ -78,7 +66,7 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]), //SI
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session), //PRINCIPAL
     Unit, //INPUT
-    SchedulerCommandResult, //E
+    UnauthorizedError.type, //E
     (Seq[Option[String]], Option[CookieValueWithMeta]), //OUTPUT
     Any,
     Future
@@ -90,18 +78,28 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Schedule,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ScheduleAdded),
+    UnauthorizedError.type,
+    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
     Any,
     Future
   ] =
     rootSchedulesEndpoint.post
       .in(jsonBody[Schedule])
-      .out(jsonBody[ScheduleAdded])
+      .out(
+        oneOf[SchedulerCommandResult](
+          oneOfVariant[ScheduleAdded](
+            statusCode(StatusCode.Ok)
+              .and(jsonBody[ScheduleAdded].description("Schedule added"))
+          ),
+          oneOfVariant[SchedulerNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
+          )
+        )
+      )
       .serverLogic { principal => schedule =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddSchedule(schedule)).map {
-          case r: ScheduleAdded => Right((principal._1._1, principal._1._2, r))
-          case other            => Left(other)
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddSchedule(schedule)).map { r =>
+          Right((principal._1._1, principal._1._2, r))
         }
       }
 
@@ -109,18 +107,32 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     RemoveSchedule,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ScheduleRemoved),
+    UnauthorizedError.type,
+    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
     Any,
     Future
   ] =
     rootSchedulesEndpoint.delete
       .in(jsonBody[RemoveSchedule])
-      .out(jsonBody[ScheduleRemoved])
+      .out(
+        oneOf[SchedulerCommandResult](
+          oneOfVariant[ScheduleRemoved](
+            statusCode(StatusCode.Ok)
+              .and(jsonBody[ScheduleRemoved].description("Schedule removed"))
+          ),
+          oneOfVariant[ScheduleNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[ScheduleNotFound.type].description("Schedule not found"))
+          ),
+          oneOfVariant[SchedulerNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
+          )
+        )
+      )
       .serverLogic { principal => cmd =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map {
-          case r: ScheduleRemoved => Right((principal._1._1, principal._1._2, r))
-          case other              => Left(other)
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map { r =>
+          Right((principal._1._1, principal._1._2, r))
         }
       }
 
@@ -128,18 +140,45 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Seq[ScheduleView]),
+    UnauthorizedError.type,
+    (
+      Seq[Option[String]],
+      Option[CookieValueWithMeta],
+      Either[SchedulerNotFound.type, Seq[ScheduleView]]
+    ),
     Any,
     Future
   ] =
     rootSchedulesEndpoint.get
-      .out(jsonBody[Seq[ScheduleView]])
+      .out(
+        oneOf[Either[SchedulerNotFound.type, Seq[ScheduleView]]](
+          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Seq[ScheduleView]]](
+            statusCode(StatusCode.Ok)
+              .and(
+                jsonBody[Right[SchedulerNotFound.type, Seq[ScheduleView]]]
+                  .description("Schedules loaded")
+              )
+          ) { case Right(_) =>
+            true
+          },
+          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Seq[ScheduleView]]](
+            statusCode(StatusCode.NotFound)
+              .and(
+                jsonBody[Left[SchedulerNotFound.type, Seq[ScheduleView]]]
+                  .description("Scheduler not found")
+              )
+          ) { case Left(_) =>
+            true
+          }
+        )
+      )
       .serverLogic { principal => _ =>
         loadScheduler().map {
           case Some(scheduler) =>
-            Right((principal._1._1, principal._1._2, scheduler.schedules.map(_.view)))
-          case _ => Left(SchedulerNotFound)
+            Right(
+              (principal._1._1, principal._1._2, Right(scheduler.schedules.map(_.view)))
+            )
+          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
         }
       }
 
@@ -147,7 +186,7 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    SchedulerCommandResult,
+    UnauthorizedError.type,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
     Any,
     Future
@@ -159,18 +198,28 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     CronTab,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], CronTabAdded),
+    UnauthorizedError.type,
+    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
     Any,
     Future
   ] =
     rootCronTabsEndpoint.post
       .in(jsonBody[CronTab])
-      .out(jsonBody[CronTabAdded])
+      .out(
+        oneOf[SchedulerCommandResult](
+          oneOfVariant[CronTabAdded](
+            statusCode(StatusCode.Ok)
+              .and(jsonBody[CronTabAdded].description("Cron tab added"))
+          ),
+          oneOfVariant[SchedulerNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
+          )
+        )
+      )
       .serverLogic { principal => cronTab =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddCronTab(cronTab)).map {
-          case r: CronTabAdded => Right((principal._1._1, principal._1._2, r))
-          case other           => Left(other)
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddCronTab(cronTab)).map { r =>
+          Right((principal._1._1, principal._1._2, r))
         }
       }
 
@@ -178,18 +227,32 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     RemoveCronTab,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], CronTabRemoved),
+    UnauthorizedError.type,
+    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
     Any,
     Future
   ] =
     rootCronTabsEndpoint.delete
       .in(jsonBody[RemoveCronTab])
-      .out(jsonBody[CronTabRemoved])
+      .out(
+        oneOf[SchedulerCommandResult](
+          oneOfVariant[CronTabRemoved](
+            statusCode(StatusCode.Ok)
+              .and(jsonBody[CronTabRemoved].description("Cron tab removed"))
+          ),
+          oneOfVariant[CronTabNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[CronTabNotFound.type].description("Cron tab not found"))
+          ),
+          oneOfVariant[SchedulerNotFound.type](
+            statusCode(StatusCode.NotFound)
+              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
+          )
+        )
+      )
       .serverLogic { principal => cmd =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map {
-          case r: CronTabRemoved => Right((principal._1._1, principal._1._2, r))
-          case other             => Left(other)
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map { r =>
+          Right((principal._1._1, principal._1._2, r))
         }
       }
 
@@ -197,17 +260,43 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Seq[CronTab]),
+    UnauthorizedError.type,
+    (
+      Seq[Option[String]],
+      Option[CookieValueWithMeta],
+      Either[SchedulerNotFound.type, Seq[CronTab]]
+    ),
     Any,
     Future
   ] =
     rootCronTabsEndpoint.get
-      .out(jsonBody[Seq[CronTab]])
+      .out(
+        oneOf[Either[SchedulerNotFound.type, Seq[CronTab]]](
+          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Seq[CronTab]]](
+            statusCode(StatusCode.Ok)
+              .and(
+                jsonBody[Right[SchedulerNotFound.type, Seq[CronTab]]]
+                  .description("Cron tabs loaded")
+              )
+          ) { case Right(_) =>
+            true
+          },
+          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Seq[CronTab]]](
+            statusCode(StatusCode.NotFound)
+              .and(
+                jsonBody[Left[SchedulerNotFound.type, Seq[CronTab]]]
+                  .description("Scheduler not found")
+              )
+          ) { case Left(_) =>
+            true
+          }
+        )
+      )
       .serverLogic { principal => _ =>
         loadScheduler().map {
-          case Some(scheduler) => Right((principal._1._1, principal._1._2, scheduler.cronTabs))
-          case _               => Left(SchedulerNotFound)
+          case Some(scheduler) =>
+            Right((principal._1._1, principal._1._2, Right(scheduler.cronTabs)))
+          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
         }
       }
 
@@ -215,14 +304,33 @@ trait SchedulerServiceEndpoints
     (Seq[Option[String]], Method, Option[String], Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     List[String],
-    SchedulerCommandResult,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Scheduler),
+    UnauthorizedError.type,
+    (Seq[Option[String]], Option[CookieValueWithMeta], Either[SchedulerNotFound.type, Scheduler]),
     Any,
     Future
   ] =
     rootEndpoint.get
       .in(paths)
-      .out(jsonBody[Scheduler])
+      .out(
+        oneOf[Either[SchedulerNotFound.type, Scheduler]](
+          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Scheduler]](
+            statusCode(StatusCode.Ok)
+              .and(
+                jsonBody[Right[SchedulerNotFound.type, Scheduler]].description("Scheduler loaded")
+              )
+          ) { case Right(_) =>
+            true
+          },
+          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Scheduler]](
+            statusCode(StatusCode.NotFound)
+              .and(
+                jsonBody[Left[SchedulerNotFound.type, Scheduler]].description("Scheduler not found")
+              )
+          ) { case Left(_) =>
+            true
+          }
+        )
+      )
       .serverLogic { principal => paths =>
         val id =
           paths match {
@@ -230,8 +338,9 @@ trait SchedulerServiceEndpoints
             case _   => Some(paths.head)
           }
         loadScheduler(id).map {
-          case Some(scheduler) => Right((principal._1._1, principal._1._2, scheduler))
-          case _               => Left(SchedulerNotFound)
+          case Some(scheduler) =>
+            Right((principal._1._1, principal._1._2, Right(scheduler)))
+          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
         }
       }
 

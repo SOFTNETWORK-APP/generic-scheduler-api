@@ -1,29 +1,23 @@
 package app.softnetwork.scheduler.scalatest
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.api.server.config.ServerSettings.RootPath
 import app.softnetwork.scheduler.api.SchedulerGrpcServices
 import app.softnetwork.scheduler.config.SchedulerSettings.SchedulerPath
-import app.softnetwork.scheduler.launch.SchedulerRoutes
-import app.softnetwork.scheduler.message.{RemoveCronTab, RemoveSchedule}
+import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
 import app.softnetwork.serialization._
-import app.softnetwork.session.scalatest.{SessionServiceRoute, SessionTestKit}
+import app.softnetwork.session.scalatest.SessionTestKit
 import org.scalatest.Suite
 
 trait SchedulerRouteTestKit
     extends SessionTestKit
     with SchedulerTestKit
-    with SchedulerRoutes
     with SchedulerGrpcServices {
-  _: Suite =>
+  _: Suite with ApiRoutes =>
 
   lazy val path = s"/$RootPath/$SchedulerPath"
-
-  override def apiRoutes(system: ActorSystem[_]): Route =
-    SessionServiceRoute(system).route ~ schedulerService(system).route
 
   def addSchedule(schedule: Schedule): Unit = {
     withHeaders(Post(s"$path/schedules", schedule)) ~> routes ~> check {
@@ -32,14 +26,19 @@ trait SchedulerRouteTestKit
     }
   }
 
-  def removeSchedule(persistenceId: String, entityId: String, key: String): Unit = {
+  def removeSchedule(
+    persistenceId: String,
+    entityId: String,
+    key: String,
+    statusCode: StatusCode = StatusCodes.OK
+  ): Unit = {
     withHeaders(
       Delete(
         s"$path/schedules",
         RemoveSchedule(persistenceId, entityId, key)
       )
     ) ~> routes ~> check {
-      status shouldEqual StatusCodes.OK
+      status shouldEqual statusCode
       refreshSession(headers)
     }
   }
@@ -51,14 +50,19 @@ trait SchedulerRouteTestKit
     }
   }
 
-  def removeCronTab(persistenceId: String, entityId: String, key: String): Unit = {
+  def removeCronTab(
+    persistenceId: String,
+    entityId: String,
+    key: String,
+    statusCode: StatusCode = StatusCodes.OK
+  ): Unit = {
     withHeaders(
       Delete(
         s"$path/crons",
         RemoveCronTab(persistenceId, entityId, key)
       )
     ) ~> routes ~> check {
-      status shouldEqual StatusCodes.OK
+      status shouldEqual statusCode
       refreshSession(headers)
     }
   }

@@ -1,23 +1,29 @@
 package app.softnetwork.scheduler.service
 
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.model.StatusCodes
+import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.scheduler.scalatest.SchedulerRouteTestKit
 import app.softnetwork.serialization
+import app.softnetwork.serialization.commonFormats
 import app.softnetwork.session.config.Settings
+import org.json4s.Formats
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success, Try}
 
-class SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit {
+trait SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit { _: ApiRoutes =>
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   implicit lazy val asystem: ActorSystem[Nothing] = typedSystem()
 
   implicit lazy val ec: ExecutionContextExecutor = asystem.executionContext
+
+  implicit def formats: Formats = commonFormats
 
   val schedule: Schedule = Schedule("s", "0", "add", 1, Some(true), None, None)
 
@@ -57,9 +63,11 @@ class SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit {
     }
     "remove schedule" in {
       removeSchedule(schedule.persistenceId, schedule.entityId, schedule.key)
+      removeSchedule(schedule.persistenceId, schedule.entityId, schedule.key, StatusCodes.NotFound)
     }
     "remove cron tab" in {
       removeCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key)
+      removeCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key, StatusCodes.NotFound)
     }
   }
 

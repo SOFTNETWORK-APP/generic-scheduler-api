@@ -7,19 +7,7 @@ import app.softnetwork.api.server._
 import app.softnetwork.persistence.service.Service
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
-import app.softnetwork.scheduler.message.{
-  AddCronTab,
-  AddSchedule,
-  CronTabAdded,
-  CronTabRemoved,
-  RemoveCronTab,
-  RemoveSchedule,
-  ScheduleAdded,
-  ScheduleRemoved,
-  SchedulerCommand,
-  SchedulerCommandResult,
-  SchedulerErrorMessage
-}
+import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model._
 import app.softnetwork.serialization._
 import app.softnetwork.session.service.SessionService
@@ -33,8 +21,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
 trait SchedulerService
-    extends SessionService
-    with Directives
+    extends Directives
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
@@ -48,12 +35,14 @@ trait SchedulerService
 
   import Session._
 
+  def sessionService: SessionService
+
   val route: Route = {
     pathPrefix(SchedulerSettings.SchedulerPath) {
       // check anti CSRF token
       hmacTokenCsrfProtection(checkHeader) {
         // check if a session exists
-        _requiredSession(ec) { session =>
+        sessionService.requiredSession { session =>
           // only administrators should be allowed to access this resource
           if (session.admin) {
             schedules ~ crons ~ scheduler
@@ -81,7 +70,8 @@ trait SchedulerService
     } ~ delete {
       entity(as[RemoveSchedule]) { cmd =>
         run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd) completeWith {
-          case r: ScheduleRemoved => complete(HttpResponse(StatusCodes.OK, entity = r))
+          case r: ScheduleRemoved       => complete(HttpResponse(StatusCodes.OK, entity = r))
+          case r: ScheduleNotFound.type => complete(HttpResponse(StatusCodes.NotFound, entity = r))
           case r: SchedulerErrorMessage =>
             complete(HttpResponse(StatusCodes.BadRequest, entity = r))
           case _ => complete(HttpResponse(StatusCodes.BadRequest))
@@ -114,7 +104,8 @@ trait SchedulerService
     } ~ delete {
       entity(as[RemoveCronTab]) { cmd =>
         run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd) completeWith {
-          case r: CronTabRemoved => complete(HttpResponse(StatusCodes.OK, entity = r))
+          case r: CronTabRemoved       => complete(HttpResponse(StatusCodes.OK, entity = r))
+          case r: CronTabNotFound.type => complete(HttpResponse(StatusCodes.NotFound, entity = r))
           case r: SchedulerErrorMessage =>
             complete(HttpResponse(StatusCodes.BadRequest, entity = r))
           case _ => complete(HttpResponse(StatusCodes.BadRequest))
@@ -158,10 +149,24 @@ trait SchedulerService
 }
 
 object SchedulerService {
-  def apply(sys: ActorSystem[_]): SchedulerService = {
+  def apply(_system: ActorSystem[_], _sessionService: SessionService): SchedulerService = {
     new SchedulerService {
-      override implicit def system: ActorSystem[_] = sys
+      override def sessionService: SessionService = _sessionService
+      override implicit def system: ActorSystem[_] = _system
       lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
   }
+
+  def oneOffCookie(system: ActorSystem[_]): SchedulerService =
+    SchedulerService(system, SessionService.oneOffCookie(system))
+
+  def oneOffHeader(system: ActorSystem[_]): SchedulerService =
+    SchedulerService(system, SessionService.oneOffHeader(system))
+
+  def refreshableCookie(system: ActorSystem[_]): SchedulerService =
+    SchedulerService(system, SessionService.refreshableCookie(system))
+
+  def refreshableHeader(system: ActorSystem[_]): SchedulerService =
+    SchedulerService(system, SessionService.refreshableHeader(system))
+
 }

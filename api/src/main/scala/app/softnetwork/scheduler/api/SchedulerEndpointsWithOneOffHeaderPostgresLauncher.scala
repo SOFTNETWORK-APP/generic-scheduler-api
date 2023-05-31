@@ -7,7 +7,7 @@ import app.softnetwork.session.service.SessionEndpoints
 import com.softwaremill.session.CsrfCheckHeaderAndForm
 import org.slf4j.{Logger, LoggerFactory}
 
-object SchedulerWithOneOffHeaderPostgresLauncher
+object SchedulerEndpointsWithOneOffHeaderPostgresLauncher
     extends SchedulerEndpointsApi
     with JdbcSchemaProvider
     with CsrfCheckHeaderAndForm {
