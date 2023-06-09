@@ -5,6 +5,8 @@ import app.softnetwork.api.server.ApiEndpoints
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
 import app.softnetwork.session.service.SessionEndpoints
+import sttp.capabilities.WebSockets
+import sttp.capabilities.akka.AkkaStreams
 import sttp.tapir.server.ServerEndpoint
 
 import scala.concurrent.Future
@@ -16,6 +18,7 @@ trait SchedulerEndpoints extends ApiEndpoints with SchedulerGuardian { _: Schema
   def schedulerEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
     SchedulerServiceEndpoints.apply(system, sessionEndpoints(system))
 
-  override def endpoints: ActorSystem[_] => List[ServerEndpoint[Any, Future]] = system =>
+  override def endpoints
+    : ActorSystem[_] => List[ServerEndpoint[AkkaStreams with WebSockets, Future]] = system =>
     schedulerEndpoints(system).endpoints
 }
