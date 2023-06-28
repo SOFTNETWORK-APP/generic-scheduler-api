@@ -11,7 +11,6 @@ import app.softnetwork.scheduler.model.{
   CronTab,
   CronTabItem,
   Schedule,
-  ScheduleView,
   Scheduler,
   SchedulerItem
 }
@@ -121,8 +120,6 @@ package object message {
   class SchedulerErrorMessage(override val message: String)
       extends ErrorMessage(message)
       with SchedulerCommandResult
-
-  case object UnauthorizedError extends SchedulerErrorMessage("Unauthorized")
 
   case object SchedulerNotFound extends SchedulerErrorMessage("SchedulerNotFound")
 

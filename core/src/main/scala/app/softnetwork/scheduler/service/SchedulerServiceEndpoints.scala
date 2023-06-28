@@ -2,23 +2,28 @@ package app.softnetwork.scheduler.service
 
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.server.Route
-import app.softnetwork.api.server.ApiEndpoint
+import app.softnetwork.api.server.{ApiEndpoint, ApiErrors}
+import app.softnetwork.api.server.ApiErrors.Unauthorized
 import app.softnetwork.persistence.service.Service
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
-import app.softnetwork.scheduler.message._
+import app.softnetwork.scheduler.message.{SchedulerNotFound, _}
 import app.softnetwork.scheduler.model._
 import app.softnetwork.session.service.SessionEndpoints
-import org.json4s.Formats
+import com.softwaremill.session.{
+  GetSessionTransport,
+  SetSessionTransport,
+  TapirCsrfCheckMode,
+  TapirSessionContinuity
+}
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 import sttp.model.headers.CookieValueWithMeta
-import sttp.model.{Method, StatusCode}
+import sttp.model.Method
 import sttp.monad.FutureMonad
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.json4s.jsonBody
-import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.server.{PartialServerEndpoint, ServerEndpoint}
 
 import scala.concurrent.Future
@@ -31,42 +36,52 @@ trait SchedulerServiceEndpoints
 
   import app.softnetwork.serialization._
 
-  implicit def formats: Formats = commonFormats
-
   def sessionEndpoints: SessionEndpoints
 
+  def sc: TapirSessionContinuity[Session] = sessionEndpoints.sc
+
+  def st: SetSessionTransport = sessionEndpoints.st
+
+  def gt: GetSessionTransport = sessionEndpoints.gt
+
+  def checkMode: TapirCsrfCheckMode[Session] = sessionEndpoints.checkMode
+
   def rootEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
+    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    UnauthorizedError.type,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
     Any,
     Future
-  ] =
-    sessionEndpoints.antiCsrfWithRequiredSession.endpoint
+  ] = {
+    val partial = sessionEndpoints.antiCsrfWithRequiredSession(sc, gt, checkMode)
+    partial.endpoint
       .in(SchedulerSettings.SchedulerPath)
-      .out(sessionEndpoints.antiCsrfWithRequiredSession.securityOutput)
-      .errorOut(
-        oneOf[UnauthorizedError.type](
-          oneOfVariant[UnauthorizedError.type](
-            statusCode(StatusCode.Unauthorized)
-              .and(jsonBody[UnauthorizedError.type].description("Unauthorized"))
-          )
-        )
-      )
+      .out(partial.securityOutput)
+      .errorOut(errors)
       .serverSecurityLogic { inputs =>
-        sessionEndpoints.antiCsrfWithRequiredSession.securityLogic(new FutureMonad())(inputs).map {
-          case Left(_)  => Left(UnauthorizedError)
+        partial.securityLogic(new FutureMonad())(inputs).map {
+          case Left(_)  => Left(Unauthorized("Unauthorized"))
           case Right(r) => Right((r._1, r._2))
         }
       }
+  }
+
+  def error(l: SchedulerCommandResult): ApiErrors.ErrorInfo =
+    l match {
+      case ScheduleNotFound         => ApiErrors.NotFound(ScheduleNotFound.message)
+      case CronTabNotFound          => ApiErrors.NotFound(CronTabNotFound.message)
+      case SchedulerNotFound        => ApiErrors.NotFound(SchedulerNotFound.message)
+      case e: SchedulerErrorMessage => ApiErrors.BadRequest(e.message)
+      case _                        => ApiErrors.BadRequest("")
+    }
 
   val rootSchedulesEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]), //SI
+    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session), //PRINCIPAL
-    Unit, //INPUT
-    UnauthorizedError.type, //E
+    Unit, //SECURITY_INPUT
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta]), //OUTPUT
     Any,
     Future
@@ -74,119 +89,44 @@ trait SchedulerServiceEndpoints
     rootEndpoint
       .in("schedules")
 
-  val addScheduleEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    Schedule,
-    UnauthorizedError.type,
-    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
-    Any,
-    Future
-  ] =
+  val addScheduleEndpoint: ServerEndpoint[Any, Future] =
     rootSchedulesEndpoint.post
       .in(jsonBody[Schedule])
-      .out(
-        oneOf[SchedulerCommandResult](
-          oneOfVariant[ScheduleAdded](
-            statusCode(StatusCode.Ok)
-              .and(jsonBody[ScheduleAdded].description("Schedule added"))
-          ),
-          oneOfVariant[SchedulerNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
-          )
-        )
-      )
+      .out(jsonBody[ScheduleAdded].description("Schedule added"))
       .serverLogic { principal => schedule =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddSchedule(schedule)).map { r =>
-          Right((principal._1._1, principal._1._2, r))
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddSchedule(schedule)).map {
+          case r: ScheduleAdded => Right((principal._1._1, principal._1._2, r))
+          case other            => Left(error(other))
         }
       }
 
-  val removeScheduleEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    RemoveSchedule,
-    UnauthorizedError.type,
-    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
-    Any,
-    Future
-  ] =
+  val removeScheduleEndpoint: ServerEndpoint[Any, Future] =
     rootSchedulesEndpoint.delete
       .in(jsonBody[RemoveSchedule])
-      .out(
-        oneOf[SchedulerCommandResult](
-          oneOfVariant[ScheduleRemoved](
-            statusCode(StatusCode.Ok)
-              .and(jsonBody[ScheduleRemoved].description("Schedule removed"))
-          ),
-          oneOfVariant[ScheduleNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[ScheduleNotFound.type].description("Schedule not found"))
-          ),
-          oneOfVariant[SchedulerNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
-          )
-        )
-      )
+      .out(jsonBody[ScheduleRemoved].description("Schedule removed"))
       .serverLogic { principal => cmd =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map { r =>
-          Right((principal._1._1, principal._1._2, r))
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map {
+          case r: ScheduleRemoved => Right((principal._1._1, principal._1._2, r))
+          case other              => Left(error(other))
         }
       }
 
-  val listSchedulesEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    Unit,
-    UnauthorizedError.type,
-    (
-      Seq[Option[String]],
-      Option[CookieValueWithMeta],
-      Either[SchedulerNotFound.type, Seq[ScheduleView]]
-    ),
-    Any,
-    Future
-  ] =
+  val listSchedulesEndpoint: ServerEndpoint[Any, Future] =
     rootSchedulesEndpoint.get
-      .out(
-        oneOf[Either[SchedulerNotFound.type, Seq[ScheduleView]]](
-          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Seq[ScheduleView]]](
-            statusCode(StatusCode.Ok)
-              .and(
-                jsonBody[Right[SchedulerNotFound.type, Seq[ScheduleView]]]
-                  .description("Schedules loaded")
-              )
-          ) { case Right(_) =>
-            true
-          },
-          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Seq[ScheduleView]]](
-            statusCode(StatusCode.NotFound)
-              .and(
-                jsonBody[Left[SchedulerNotFound.type, Seq[ScheduleView]]]
-                  .description("Scheduler not found")
-              )
-          ) { case Left(_) =>
-            true
-          }
-        )
-      )
+      .out(jsonBody[Seq[ScheduleView]].description("Schedules loaded"))
       .serverLogic { principal => _ =>
         loadScheduler().map {
           case Some(scheduler) =>
-            Right(
-              (principal._1._1, principal._1._2, Right(scheduler.schedules.map(_.view)))
-            )
-          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
+            Right((principal._1._1, principal._1._2, scheduler.schedules.map(_.view)))
+          case _ => Left(error(SchedulerNotFound))
         }
       }
 
   val rootCronTabsEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
+    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    UnauthorizedError.type,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
     Any,
     Future
@@ -194,143 +134,42 @@ trait SchedulerServiceEndpoints
     rootEndpoint
       .in("crons")
 
-  val addCronTabEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    CronTab,
-    UnauthorizedError.type,
-    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
-    Any,
-    Future
-  ] =
+  val addCronTabEndpoint: ServerEndpoint[Any, Future] =
     rootCronTabsEndpoint.post
       .in(jsonBody[CronTab])
-      .out(
-        oneOf[SchedulerCommandResult](
-          oneOfVariant[CronTabAdded](
-            statusCode(StatusCode.Ok)
-              .and(jsonBody[CronTabAdded].description("Cron tab added"))
-          ),
-          oneOfVariant[SchedulerNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
-          )
-        )
-      )
+      .out(jsonBody[CronTabAdded].description("Cron tab added"))
       .serverLogic { principal => cronTab =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddCronTab(cronTab)).map { r =>
-          Right((principal._1._1, principal._1._2, r))
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), AddCronTab(cronTab)).map {
+          case r: CronTabAdded => Right((principal._1._1, principal._1._2, r))
+          case other           => Left(error(other))
         }
       }
 
-  val removeCronTabEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    RemoveCronTab,
-    UnauthorizedError.type,
-    (Seq[Option[String]], Option[CookieValueWithMeta], SchedulerCommandResult),
-    Any,
-    Future
-  ] =
+  val removeCronTabEndpoint: ServerEndpoint[Any, Future] =
     rootCronTabsEndpoint.delete
       .in(jsonBody[RemoveCronTab])
-      .out(
-        oneOf[SchedulerCommandResult](
-          oneOfVariant[CronTabRemoved](
-            statusCode(StatusCode.Ok)
-              .and(jsonBody[CronTabRemoved].description("Cron tab removed"))
-          ),
-          oneOfVariant[CronTabNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[CronTabNotFound.type].description("Cron tab not found"))
-          ),
-          oneOfVariant[SchedulerNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(jsonBody[SchedulerNotFound.type].description("Scheduler not found"))
-          )
-        )
-      )
+      .out(jsonBody[CronTabRemoved].description("Cron tab removed"))
       .serverLogic { principal => cmd =>
-        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map { r =>
-          Right((principal._1._1, principal._1._2, r))
+        run(SchedulerSettings.SchedulerConfig.id.getOrElse("*"), cmd).map {
+          case r: CronTabRemoved => Right((principal._1._1, principal._1._2, r))
+          case other             => Left(error(other))
         }
       }
 
-  val listCronTabsEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    Unit,
-    UnauthorizedError.type,
-    (
-      Seq[Option[String]],
-      Option[CookieValueWithMeta],
-      Either[SchedulerNotFound.type, Seq[CronTab]]
-    ),
-    Any,
-    Future
-  ] =
+  val listCronTabsEndpoint: ServerEndpoint[Any, Future] =
     rootCronTabsEndpoint.get
-      .out(
-        oneOf[Either[SchedulerNotFound.type, Seq[CronTab]]](
-          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Seq[CronTab]]](
-            statusCode(StatusCode.Ok)
-              .and(
-                jsonBody[Right[SchedulerNotFound.type, Seq[CronTab]]]
-                  .description("Cron tabs loaded")
-              )
-          ) { case Right(_) =>
-            true
-          },
-          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Seq[CronTab]]](
-            statusCode(StatusCode.NotFound)
-              .and(
-                jsonBody[Left[SchedulerNotFound.type, Seq[CronTab]]]
-                  .description("Scheduler not found")
-              )
-          ) { case Left(_) =>
-            true
-          }
-        )
-      )
+      .out(jsonBody[Seq[CronTab]].description("Cron tabs loaded"))
       .serverLogic { principal => _ =>
         loadScheduler().map {
-          case Some(scheduler) =>
-            Right((principal._1._1, principal._1._2, Right(scheduler.cronTabs)))
-          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
+          case Some(scheduler) => Right((principal._1._1, principal._1._2, scheduler.cronTabs))
+          case _               => Left(error(SchedulerNotFound))
         }
       }
 
-  val loadSchedulerEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    UnauthorizedError.type,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Either[SchedulerNotFound.type, Scheduler]),
-    Any,
-    Future
-  ] =
+  val loadSchedulerEndpoint: ServerEndpoint[Any, Future] =
     rootEndpoint.get
       .in(paths)
-      .out(
-        oneOf[Either[SchedulerNotFound.type, Scheduler]](
-          oneOfVariantValueMatcher[Right[SchedulerNotFound.type, Scheduler]](
-            statusCode(StatusCode.Ok)
-              .and(
-                jsonBody[Right[SchedulerNotFound.type, Scheduler]].description("Scheduler loaded")
-              )
-          ) { case Right(_) =>
-            true
-          },
-          oneOfVariantValueMatcher[Left[SchedulerNotFound.type, Scheduler]](
-            statusCode(StatusCode.NotFound)
-              .and(
-                jsonBody[Left[SchedulerNotFound.type, Scheduler]].description("Scheduler not found")
-              )
-          ) { case Left(_) =>
-            true
-          }
-        )
-      )
+      .out(jsonBody[Scheduler].description("Scheduler loaded"))
       .serverLogic { principal => paths =>
         val id =
           paths match {
@@ -338,9 +177,8 @@ trait SchedulerServiceEndpoints
             case _   => Some(paths.head)
           }
         loadScheduler(id).map {
-          case Some(scheduler) =>
-            Right((principal._1._1, principal._1._2, Right(scheduler)))
-          case _ => Right((principal._1._1, principal._1._2, Left(SchedulerNotFound)))
+          case Some(scheduler) => Right((principal._1._1, principal._1._2, scheduler))
+          case _               => Left(error(SchedulerNotFound))
         }
       }
 
