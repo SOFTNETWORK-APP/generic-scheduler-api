@@ -7,13 +7,7 @@ import app.softnetwork.scheduler.message.SchedulerEvents.{
   ExternalEntityToSchedulerEvent,
   SchedulerEventWithCommand
 }
-import app.softnetwork.scheduler.model.{
-  CronTab,
-  CronTabItem,
-  Schedule,
-  Scheduler,
-  SchedulerItem
-}
+import app.softnetwork.scheduler.model.{CronTab, CronTabItem, Schedule, Scheduler, SchedulerItem}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
