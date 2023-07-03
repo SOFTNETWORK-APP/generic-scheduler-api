@@ -47,7 +47,7 @@ trait SchedulerServiceEndpoints
   def checkMode: TapirCsrfCheckMode[Session] = sessionEndpoints.checkMode
 
   def rootEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
     ApiErrors.ErrorInfo,
@@ -78,7 +78,7 @@ trait SchedulerServiceEndpoints
     }
 
   val rootSchedulesEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session), //PRINCIPAL
     Unit, //SECURITY_INPUT
     ApiErrors.ErrorInfo,
@@ -123,7 +123,7 @@ trait SchedulerServiceEndpoints
       }
 
   val rootCronTabsEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Option[String], Method, Option[String], Map[String, String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
     ApiErrors.ErrorInfo,
