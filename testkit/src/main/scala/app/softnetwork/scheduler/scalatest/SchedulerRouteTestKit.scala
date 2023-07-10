@@ -17,6 +17,12 @@ trait SchedulerRouteTestKit
     with SchedulerGrpcServices {
   _: Suite with ApiRoutes =>
 
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    // pre load routes
+    apiRoutes(typedSystem())
+  }
+
   lazy val path = s"/$RootPath/$SchedulerPath"
 
   def addSchedule(schedule: Schedule): Unit = {
