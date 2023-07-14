@@ -48,8 +48,8 @@ package object model {
     def removable: Boolean = {
       // the schedule could not be triggered now
       !triggerable &&
-      // the schedule can not be triggered repeatedly
-      !repeatedly.getOrElse(false) &&
+      // the schedule can not be triggered repeatedly or should be triggered at a specified date
+      (!repeatedly.getOrElse(false) || scheduledDate.isDefined) &&
       // the schedule has not defined a date at which it should be triggered
       // or it has already been triggered at or after the specified date
       (scheduledDate.isEmpty || (lastTriggered.isDefined && (getLastTriggered.after(
