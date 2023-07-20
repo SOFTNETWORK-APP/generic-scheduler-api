@@ -18,6 +18,8 @@ import com.softwaremill.session.{
 }
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
+import sttp.capabilities
+import sttp.capabilities.akka.AkkaStreams
 import sttp.model.headers.CookieValueWithMeta
 import sttp.model.Method
 import sttp.monad.FutureMonad
@@ -182,15 +184,16 @@ trait SchedulerServiceEndpoints
         }
       }
 
-  override def endpoints: List[ServerEndpoint[Any, Future]] = List(
-    addScheduleEndpoint,
-    removeScheduleEndpoint,
-    listSchedulesEndpoint,
-    addCronTabEndpoint,
-    removeCronTabEndpoint,
-    listCronTabsEndpoint,
-    loadSchedulerEndpoint
-  )
+  override def endpoints: List[ServerEndpoint[AkkaStreams with capabilities.WebSockets, Future]] =
+    List(
+      addScheduleEndpoint,
+      removeScheduleEndpoint,
+      listSchedulesEndpoint,
+      addCronTabEndpoint,
+      removeCronTabEndpoint,
+      listCronTabsEndpoint,
+      loadSchedulerEndpoint
+    )
 
   lazy val route: Route = apiRoute
 }
