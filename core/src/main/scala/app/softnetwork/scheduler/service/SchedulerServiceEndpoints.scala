@@ -14,6 +14,7 @@ import sttp.capabilities
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.Method
 import sttp.model.headers.CookieValueWithMeta
+import sttp.tapir.json.json4s.jsonBody
 import sttp.tapir.server.{PartialServerEndpointWithSecurityOutput, ServerEndpoint}
 
 import scala.concurrent.Future
