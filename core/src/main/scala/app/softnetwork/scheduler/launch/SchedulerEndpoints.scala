@@ -13,5 +13,6 @@ trait SchedulerEndpoints extends ApiEndpoints with SchedulerGuardian { _: Schema
   def schedulerEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
     SchedulerServiceEndpoints.apply(system, sessionEndpoints(system))
 
-  override def endpoints: ActorSystem[_] => List[ApiEndpoint] = system => List(schedulerEndpoints(system))
+  override def endpoints: ActorSystem[_] => List[ApiEndpoint] = system =>
+    List(schedulerEndpoints(system))
 }

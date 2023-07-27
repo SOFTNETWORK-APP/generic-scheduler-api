@@ -170,7 +170,6 @@ trait SchedulerServiceEndpoints
       loadSchedulerEndpoint
     )
 
-  lazy val route: Route = apiRoute
 }
 
 object SchedulerServiceEndpoints {

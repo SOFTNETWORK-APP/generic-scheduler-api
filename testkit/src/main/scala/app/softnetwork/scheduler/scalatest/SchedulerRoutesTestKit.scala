@@ -1,16 +1,19 @@
 package app.softnetwork.scheduler.scalatest
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.server.Route
-import app.softnetwork.scheduler.service.SchedulerService
+import app.softnetwork.api.server.ApiRoute
+import app.softnetwork.persistence.schema.SchemaProvider
+import app.softnetwork.scheduler.launch.SchedulerRoutes
 import app.softnetwork.session.scalatest.SessionServiceRoutes
 
-trait SchedulerRoutesTestKit extends SessionServiceRoutes {
+trait SchedulerRoutesTestKit extends SchedulerRoutes with SessionServiceRoutes {
+  _: SchemaProvider =>
 
-  def schedulerService: ActorSystem[_] => SchedulerService = system =>
-    SchedulerService(system, sessionService(system))
-
-  override def apiRoutes(system: ActorSystem[_]): Route =
-    sessionServiceRoute(system).route ~ schedulerService(system).route
+  override def apiRoutes: ActorSystem[_] => List[ApiRoute] =
+    system =>
+      List(
+        sessionServiceRoute(system),
+        schedulerService(system)
+      )
 
 }

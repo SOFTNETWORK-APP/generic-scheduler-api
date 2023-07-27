@@ -27,7 +27,8 @@ trait SchedulerService
     with StrictLogging
     with Service[SchedulerCommand, SchedulerCommandResult]
     with SchedulerDao
-    with SchedulerHandler {
+    with SchedulerHandler
+    with ApiRoute {
 
   implicit def serialization: Serialization.type = jackson.Serialization
 
