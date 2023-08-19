@@ -27,6 +27,8 @@ ThisBuild / libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1"
 ) ++ scalatest
 
+ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always //FIXME - remove when scalatest is updated
+
 Test / parallelExecution := false
 
 lazy val common = project.in(file("common"))
