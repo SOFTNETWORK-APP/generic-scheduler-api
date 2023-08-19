@@ -6,3 +6,5 @@ sbt.json
 target
 .metals
 actions-runner
+.bloop
+metals.sbt
