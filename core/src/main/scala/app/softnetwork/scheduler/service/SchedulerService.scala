@@ -157,17 +157,4 @@ object SchedulerService {
       lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
   }
-
-  def oneOffCookie(system: ActorSystem[_]): SchedulerService =
-    SchedulerService(system, SessionService.oneOffCookie(system))
-
-  def oneOffHeader(system: ActorSystem[_]): SchedulerService =
-    SchedulerService(system, SessionService.oneOffHeader(system))
-
-  def refreshableCookie(system: ActorSystem[_]): SchedulerService =
-    SchedulerService(system, SessionService.refreshableCookie(system))
-
-  def refreshableHeader(system: ActorSystem[_]): SchedulerService =
-    SchedulerService(system, SessionService.refreshableHeader(system))
-
 }

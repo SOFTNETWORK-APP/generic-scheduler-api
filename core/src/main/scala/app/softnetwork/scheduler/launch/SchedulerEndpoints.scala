@@ -4,11 +4,8 @@ import akka.actor.typed.ActorSystem
 import app.softnetwork.api.server.{ApiEndpoints, Endpoint}
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
-import app.softnetwork.session.service.SessionEndpoints
 
-trait SchedulerEndpoints extends ApiEndpoints with SchedulerGuardian { _: SchemaProvider =>
-
-  def sessionEndpoints: ActorSystem[_] => SessionEndpoints
+trait SchedulerEndpoints extends ApiEndpoints { _: SchedulerGuardian with SchemaProvider =>
 
   def schedulerEndpoints: ActorSystem[_] => SchedulerServiceEndpoints = system =>
     SchedulerServiceEndpoints.apply(system, sessionEndpoints(system))

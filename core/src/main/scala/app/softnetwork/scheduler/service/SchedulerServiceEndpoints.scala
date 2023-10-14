@@ -1,8 +1,7 @@
 package app.softnetwork.scheduler.service
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.server.Route
-import app.softnetwork.api.server.{ApiErrors, SwaggerEndpoint}
+import app.softnetwork.api.server.ApiErrors
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
 import app.softnetwork.scheduler.message.{SchedulerNotFound, _}
@@ -23,8 +22,7 @@ import scala.language.implicitConversions
 trait SchedulerServiceEndpoints
     extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult]
     with SchedulerDao
-    with SchedulerHandler
-    with SwaggerEndpoint {
+    with SchedulerHandler {
 
   import app.softnetwork.serialization._
 
@@ -171,7 +169,6 @@ trait SchedulerServiceEndpoints
       loadSchedulerEndpoint
     )
 
-  override def route: Route = apiRoute ~ swaggerRoute
 }
 
 object SchedulerServiceEndpoints {

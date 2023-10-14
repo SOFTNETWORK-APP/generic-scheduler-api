@@ -1,6 +1,6 @@
 import com.typesafe.sbt.packager.docker._
 
-Compile / mainClass := Some("app.softnetwork.scheduler.api.SchedulerWithRefreshableCookiePostgresLauncher")
+Compile / mainClass := Some("app.softnetwork.scheduler.api.SchedulerEndpointsPostgresLauncher")
 
 dockerBaseImage := "openjdk:8"
 

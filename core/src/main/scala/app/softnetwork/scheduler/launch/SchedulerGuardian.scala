@@ -1,6 +1,7 @@
 package app.softnetwork.scheduler.launch
 
 import akka.actor.typed.ActorSystem
+import app.softnetwork.api.server.SwaggerEndpoint
 import app.softnetwork.persistence.launch.PersistentEntity
 import app.softnetwork.persistence.launch.PersistenceGuardian._
 import app.softnetwork.persistence.query.EventProcessorStream
@@ -13,12 +14,15 @@ import app.softnetwork.scheduler.persistence.query.{
   Scheduler2EntityProcessorStream
 }
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
+import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
+import app.softnetwork.session.CsrfCheckHeader
 import app.softnetwork.session.launch.SessionGuardian
-import org.slf4j.Logger
+import app.softnetwork.session.service.SessionEndpoints
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.{Failure, Success, Try}
 
-trait SchedulerGuardian extends SessionGuardian { _: SchemaProvider =>
+trait SchedulerGuardian extends SessionGuardian with CsrfCheckHeader { self: SchemaProvider =>
 
   def log: Logger
 
@@ -62,4 +66,12 @@ trait SchedulerGuardian extends SessionGuardian { _: SchemaProvider =>
 
   override def systemVersion(): String =
     sys.env.getOrElse("VERSION", SchedulerCoreBuildInfo.version)
+
+  def schedulerSwagger: ActorSystem[_] => SwaggerEndpoint = sys =>
+    new SchedulerServiceEndpoints with SwaggerEndpoint {
+      override implicit def system: ActorSystem[_] = sys
+      lazy val log: Logger = LoggerFactory getLogger getClass.getName
+      override def sessionEndpoints: SessionEndpoints = self.sessionEndpoints(system)
+      override val applicationVersion: String = systemVersion()
+    }
 }
