@@ -7,7 +7,11 @@ import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.handlers.SchedulerHandler
 import app.softnetwork.scheduler.launch.SchedulerApplication
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.model.SessionManagers
+import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.Config
+import org.softnetwork.session.model.Session
 
 import scala.concurrent.Future
 
@@ -28,5 +32,11 @@ trait SchedulerApi extends SchedulerApplication { _: SchemaProvider =>
   override def grpcServices
     : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] = system =>
     Seq(SchedulerServiceApiHandler.partial(schedulerServer(system))(system))
+
+  override protected def sessionType: Session.SessionType =
+    Settings.Session.SessionContinuityAndTransport
+
+  override protected def manager(implicit sessionConfig: SessionConfig): SessionManager[Session] =
+    SessionManagers.basic
 
 }

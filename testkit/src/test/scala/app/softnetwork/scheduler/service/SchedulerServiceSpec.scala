@@ -7,7 +7,7 @@ import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.scheduler.scalatest.SchedulerRouteTestKit
 import app.softnetwork.serialization
 import app.softnetwork.serialization.commonFormats
-import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.SessionMaterials
 import org.json4s.Formats
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.{Logger, LoggerFactory}
@@ -15,13 +15,16 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success, Try}
 
-trait SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit { _: ApiRoutes =>
+trait SchedulerServiceSpec
+    extends AnyWordSpecLike
+    with SchedulerRouteTestKit
+    with SessionMaterials { _: ApiRoutes =>
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
-  implicit lazy val asystem: ActorSystem[Nothing] = typedSystem()
+  implicit lazy val t: ActorSystem[Nothing] = typedSystem()
 
-  implicit lazy val ec: ExecutionContextExecutor = asystem.executionContext
+  override implicit lazy val ec: ExecutionContextExecutor = t.executionContext
 
   implicit def formats: Formats = commonFormats
 
@@ -71,5 +74,4 @@ trait SchedulerServiceSpec extends AnyWordSpecLike with SchedulerRouteTestKit { 
     }
   }
 
-  override def sessionHeaderName: String = Settings.Session.CookieName
 }

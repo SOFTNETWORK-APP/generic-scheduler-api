@@ -12,9 +12,10 @@ import app.softnetwork.scheduler.persistence.query.{
   SchedulerToSampleProcessorStream
 }
 import app.softnetwork.scheduler.persistence.typed.{SampleBehavior, SchedulerBehavior}
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 
-trait SchedulerWithSampleTestKit extends SchedulerTestKit { _: Suite =>
+trait SchedulerWithSampleTestKit extends SchedulerTestKit { _: Suite with SessionMaterials =>
   override def schedulerEntities: ActorSystem[_] => Seq[launch.PersistentEntity[_, _, _, _]] =
     _ => Seq(SchedulerBehavior, SampleBehavior)
 

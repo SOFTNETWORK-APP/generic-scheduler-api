@@ -9,13 +9,14 @@ import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
 import app.softnetwork.serialization._
 import app.softnetwork.session.scalatest.SessionTestKit
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 
 trait SchedulerRouteTestKit
     extends SessionTestKit
     with SchedulerTestKit
     with SchedulerGrpcServices {
-  _: Suite with ApiRoutes =>
+  _: Suite with ApiRoutes with SessionMaterials =>
 
   override def beforeAll(): Unit = {
     super.beforeAll()

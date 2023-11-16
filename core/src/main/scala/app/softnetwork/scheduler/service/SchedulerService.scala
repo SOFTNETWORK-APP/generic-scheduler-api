@@ -4,46 +4,44 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.{Directives, Route}
 import app.softnetwork.api.server._
-import app.softnetwork.persistence.service.Service
 import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model._
 import app.softnetwork.serialization._
-import app.softnetwork.session.service.SessionService
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
 import com.softwaremill.session.CsrfDirectives.hmacTokenCsrfProtection
 import com.softwaremill.session.CsrfOptions.checkHeader
+import com.softwaremill.session.SessionConfig
 import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.jackson.Serialization
 import org.json4s.{jackson, Formats}
-import org.slf4j.{Logger, LoggerFactory}
-import org.softnetwork.session.model.Session
 
 trait SchedulerService
     extends Directives
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
-    with Service[SchedulerCommand, SchedulerCommandResult]
+    with ServiceWithSessionDirectives[SchedulerCommand, SchedulerCommandResult]
     with SchedulerDao
-    with SchedulerHandler
-    with ApiRoute {
+    with SchedulerHandler { _: SessionMaterials =>
+
+  implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
+
+  override implicit def ts: ActorSystem[_] = system
 
   implicit def serialization: Serialization.type = jackson.Serialization
 
   override implicit def formats: Formats = commonFormats
-
-  import Session._
-
-  def sessionService: SessionService
 
   val route: Route = {
     pathPrefix(SchedulerSettings.SchedulerPath) {
       // check anti CSRF token
       hmacTokenCsrfProtection(checkHeader) {
         // check if a session exists
-        sessionService.requiredSession { session =>
+        requiredSession(sc, gt) { session =>
           // only administrators should be allowed to access this resource
           if (session.admin) {
             schedules ~ crons ~ scheduler
@@ -79,7 +77,7 @@ trait SchedulerService
         }
       }
     } ~ get {
-      loadScheduler() completeWith {
+      loadScheduler()(system) completeWith {
         case Some(s) =>
           complete(
             HttpResponse(
@@ -113,7 +111,7 @@ trait SchedulerService
         }
       }
     } ~ get {
-      loadScheduler() completeWith {
+      loadScheduler()(system) completeWith {
         case Some(s) =>
           complete(
             HttpResponse(
@@ -136,7 +134,7 @@ trait SchedulerService
     }
 
   private[this] def getScheduler(scheduler: Option[String]): Route = {
-    loadScheduler(scheduler) completeWith {
+    loadScheduler(scheduler)(system) completeWith {
       case Some(s) =>
         complete(
           HttpResponse(
@@ -145,16 +143,6 @@ trait SchedulerService
           )
         )
       case _ => complete(HttpResponse(StatusCodes.NotFound))
-    }
-  }
-}
-
-object SchedulerService {
-  def apply(_system: ActorSystem[_], _sessionService: SessionService): SchedulerService = {
-    new SchedulerService {
-      override def sessionService: SessionService = _sessionService
-      override implicit def system: ActorSystem[_] = _system
-      lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
   }
 }

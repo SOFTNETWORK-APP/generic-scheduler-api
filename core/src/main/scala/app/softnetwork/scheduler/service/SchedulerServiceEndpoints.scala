@@ -6,8 +6,9 @@ import app.softnetwork.scheduler.config.SchedulerSettings
 import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
 import app.softnetwork.scheduler.message.{SchedulerNotFound, _}
 import app.softnetwork.scheduler.model._
-import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionEndpoints}
-import org.slf4j.{Logger, LoggerFactory}
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionMaterials}
+import com.softwaremill.session.SessionConfig
 import org.softnetwork.session.model.Session
 import sttp.capabilities
 import sttp.capabilities.akka.AkkaStreams
@@ -22,9 +23,13 @@ import scala.language.implicitConversions
 trait SchedulerServiceEndpoints
     extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult]
     with SchedulerDao
-    with SchedulerHandler {
+    with SchedulerHandler { _: SessionMaterials =>
 
   import app.softnetwork.serialization._
+
+  implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
+
+  override implicit def ts: ActorSystem[_] = system
 
   def secureEndpoint: PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
@@ -90,7 +95,7 @@ trait SchedulerServiceEndpoints
     rootSchedulesEndpoint.get
       .out(jsonBody[Seq[ScheduleView]].description("Schedules loaded"))
       .serverLogic { _ => _ =>
-        loadScheduler().map {
+        loadScheduler()(system).map {
           case Some(scheduler) =>
             Right(scheduler.schedules.map(_.view))
           case _ => Left(resultToApiError(SchedulerNotFound))
@@ -136,7 +141,7 @@ trait SchedulerServiceEndpoints
     rootCronTabsEndpoint.get
       .out(jsonBody[Seq[CronTab]].description("Cron tabs loaded"))
       .serverLogic { _ => _ =>
-        loadScheduler().map {
+        loadScheduler()(system).map {
           case Some(scheduler) => Right(scheduler.cronTabs)
           case _               => Left(resultToApiError(SchedulerNotFound))
         }
@@ -152,7 +157,7 @@ trait SchedulerServiceEndpoints
             case Nil => None
             case _   => Some(paths.head)
           }
-        loadScheduler(id).map {
+        loadScheduler(id)(system).map {
           case Some(scheduler) => Right(scheduler)
           case _               => Left(resultToApiError(SchedulerNotFound))
         }
@@ -169,15 +174,4 @@ trait SchedulerServiceEndpoints
       loadSchedulerEndpoint
     )
 
-}
-
-object SchedulerServiceEndpoints {
-  def apply(
-    _system: ActorSystem[_],
-    _sessionEndpoints: SessionEndpoints
-  ): SchedulerServiceEndpoints = new SchedulerServiceEndpoints {
-    override implicit def system: ActorSystem[_] = _system
-    lazy val log: Logger = LoggerFactory getLogger getClass.getName
-    override def sessionEndpoints: SessionEndpoints = _sessionEndpoints
-  }
 }

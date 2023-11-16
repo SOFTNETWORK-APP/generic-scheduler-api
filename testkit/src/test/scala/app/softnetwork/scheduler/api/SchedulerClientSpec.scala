@@ -1,13 +1,26 @@
 package app.softnetwork.scheduler.api
 
+import akka.actor.typed.ActorSystem
 import app.softnetwork.scheduler.scalatest.SchedulerTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.BasicSessionMaterials
 import org.slf4j.{Logger, LoggerFactory}
+import org.softnetwork.session.model.Session
 
 import scala.util.{Failure, Success}
 
-class SchedulerClientSpec extends AnyWordSpecLike with SchedulerTestKit with SchedulerGrpcServer {
+class SchedulerClientSpec
+    extends AnyWordSpecLike
+    with SchedulerTestKit
+    with SchedulerGrpcServer
+    with BasicSessionMaterials {
+
+  override implicit def ts: ActorSystem[_] = typedSystem()
+
+  override protected def sessionType: Session.SessionType =
+    Settings.Session.SessionContinuityAndTransport
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 

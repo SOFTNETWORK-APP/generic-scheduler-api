@@ -14,11 +14,12 @@ import app.softnetwork.scheduler.message.{
   ScheduleRemoved
 }
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
 
 trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit {
-  _: Suite =>
+  _: Suite with SessionMaterials =>
 
   /** @return
     *   roles associated with this node

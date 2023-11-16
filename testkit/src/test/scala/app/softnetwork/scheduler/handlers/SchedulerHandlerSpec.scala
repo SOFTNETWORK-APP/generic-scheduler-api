@@ -13,7 +13,10 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.persistence.typed.SampleBehavior
 import app.softnetwork.scheduler.model.{CronTab, Schedule}
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.BasicSessionMaterials
 import org.slf4j.{Logger, LoggerFactory}
+import org.softnetwork.session.model.Session
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -22,13 +25,17 @@ import scala.concurrent.ExecutionContextExecutor
 class SchedulerHandlerSpec
     extends SchedulerHandler
     with AnyWordSpecLike
-    with SchedulerWithSampleTestKit {
+    with SchedulerWithSampleTestKit
+    with BasicSessionMaterials {
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
-  implicit lazy val system: ActorSystem[Nothing] = typedSystem()
+  override implicit def ts: ActorSystem[_] = typedSystem()
 
-  implicit lazy val ec: ExecutionContextExecutor = system.executionContext
+  override implicit lazy val ec: ExecutionContextExecutor = ts.executionContext
+
+  override protected def sessionType: Session.SessionType =
+    Settings.Session.SessionContinuityAndTransport
 
   "Scheduler" must {
     val cronTab = CronTab(SampleBehavior.persistenceId, ALL_KEY, "cron", "* * * * *")

@@ -4,11 +4,25 @@ import akka.actor.typed.ActorSystem
 import app.softnetwork.api.server.{ApiRoute, ApiRoutes}
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.service.SchedulerService
+import app.softnetwork.session.service.SessionMaterials
+import com.softwaremill.session.{SessionConfig, SessionManager}
+import org.slf4j.{Logger, LoggerFactory}
+import org.softnetwork.session.model.Session
 
-trait SchedulerRoutes extends ApiRoutes { _: SchedulerGuardian with SchemaProvider =>
+import scala.concurrent.ExecutionContext
 
-  def schedulerService: ActorSystem[_] => SchedulerService = system =>
-    SchedulerService(system, sessionService(system))
+trait SchedulerRoutes extends ApiRoutes { self: SchedulerGuardian with SchemaProvider =>
+
+  def schedulerService: ActorSystem[_] => SchedulerService = sys =>
+    new SchedulerService with SessionMaterials {
+      override implicit def system: ActorSystem[_] = sys
+      override lazy val ec: ExecutionContext = sys.executionContext
+      lazy val log: Logger = LoggerFactory getLogger getClass.getName
+      override protected def sessionType: Session.SessionType = self.sessionType
+      override implicit def manager(implicit
+        sessionConfig: SessionConfig
+      ): SessionManager[Session] = self.manager
+    }
 
   override def apiRoutes: ActorSystem[_] => List[ApiRoute] =
     system =>

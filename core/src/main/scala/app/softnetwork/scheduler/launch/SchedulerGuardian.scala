@@ -17,9 +17,12 @@ import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
 import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
 import app.softnetwork.session.CsrfCheckHeader
 import app.softnetwork.session.launch.SessionGuardian
-import app.softnetwork.session.service.SessionEndpoints
+import app.softnetwork.session.service.SessionMaterials
+import com.softwaremill.session.{SessionConfig, SessionManager}
 import org.slf4j.{Logger, LoggerFactory}
+import org.softnetwork.session.model.Session
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 trait SchedulerGuardian extends SessionGuardian with CsrfCheckHeader { self: SchemaProvider =>
@@ -68,10 +71,14 @@ trait SchedulerGuardian extends SessionGuardian with CsrfCheckHeader { self: Sch
     sys.env.getOrElse("VERSION", SchedulerCoreBuildInfo.version)
 
   def schedulerSwagger: ActorSystem[_] => SwaggerEndpoint = sys =>
-    new SchedulerServiceEndpoints with SwaggerEndpoint {
+    new SchedulerServiceEndpoints with SwaggerEndpoint with SessionMaterials {
       override implicit def system: ActorSystem[_] = sys
+      override lazy val ec: ExecutionContext = sys.executionContext
       lazy val log: Logger = LoggerFactory getLogger getClass.getName
-      override def sessionEndpoints: SessionEndpoints = self.sessionEndpoints(system)
+      override protected def sessionType: Session.SessionType = self.sessionType
+      override implicit def manager(implicit
+        sessionConfig: SessionConfig
+      ): SessionManager[Session] = self.manager
       override val applicationVersion: String = systemVersion()
     }
 }
