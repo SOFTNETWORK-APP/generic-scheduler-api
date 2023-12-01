@@ -3,6 +3,7 @@ package app.softnetwork.scheduler.service
 import app.softnetwork.scheduler.scalatest.SchedulerRoutesTestKit
 import app.softnetwork.session.scalatest._
 import app.softnetwork.session.service._
+import org.softnetwork.session.model.Session
 
 package Directives {
   package OneOff {
@@ -11,28 +12,29 @@ package Directives {
       class SchedulerRoutesWithOneOffCookieBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with OneOffCookieSessionServiceTestKit
-          with BasicSessionMaterials
+          with OneOffCookieSessionServiceTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithOneOffCookieJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with OneOffCookieSessionServiceTestKit
-          with JwtSessionMaterials
+          with OneOffCookieSessionServiceTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
     package Header {
+
       class SchedulerRoutesWithOneOffHeaderBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with OneOffHeaderSessionServiceTestKit
-          with BasicSessionMaterials
+          with OneOffHeaderSessionServiceTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithOneOffHeaderJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with OneOffHeaderSessionServiceTestKit
-          with JwtSessionMaterials
+          with OneOffHeaderSessionServiceTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
   }
@@ -43,14 +45,14 @@ package Directives {
       class SchedulerRoutesWithRefreshableCookieBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with RefreshableCookieSessionServiceTestKit
-          with BasicSessionMaterials
+          with RefreshableCookieSessionServiceTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithRefreshableCookieJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with RefreshableCookieSessionServiceTestKit
-          with JwtSessionMaterials
+          with RefreshableCookieSessionServiceTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 
@@ -58,14 +60,14 @@ package Directives {
       class SchedulerRoutesWithRefreshableHeaderBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with RefreshableHeaderSessionServiceTestKit
-          with BasicSessionMaterials
+          with RefreshableHeaderSessionServiceTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithRefreshableHeaderJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerRoutesTestKit
-          with RefreshableHeaderSessionServiceTestKit
-          with JwtSessionMaterials
+          with RefreshableHeaderSessionServiceTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 

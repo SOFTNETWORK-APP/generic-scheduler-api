@@ -3,6 +3,7 @@ package app.softnetwork.scheduler.service
 import app.softnetwork.scheduler.scalatest.SchedulerEndpointsTestKit
 import app.softnetwork.session.scalatest._
 import app.softnetwork.session.service._
+import org.softnetwork.session.model.Session
 
 package Endpoints {
   package OneOff {
@@ -11,14 +12,14 @@ package Endpoints {
       class SchedulerEndpointsWithOneOffCookieBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with OneOffCookieSessionEndpointsTestKit
-          with BasicSessionMaterials
+          with OneOffCookieSessionEndpointsTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithOneOffCookieJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with OneOffCookieSessionEndpointsTestKit
-          with JwtSessionMaterials
+          with OneOffCookieSessionEndpointsTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 
@@ -27,14 +28,14 @@ package Endpoints {
       class SchedulerEndpointsWithOneOffHeaderBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with OneOffHeaderSessionEndpointsTestKit
-          with BasicSessionMaterials
+          with OneOffHeaderSessionEndpointsTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithOneOffHeaderJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with OneOffHeaderSessionEndpointsTestKit
-          with JwtSessionMaterials
+          with OneOffHeaderSessionEndpointsTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 
@@ -46,14 +47,14 @@ package Endpoints {
       class SchedulerEndpointsWithRefreshableCookieBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with RefreshableCookieSessionEndpointsTestKit
-          with BasicSessionMaterials
+          with RefreshableCookieSessionEndpointsTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithRefreshableCookieJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with RefreshableCookieSessionEndpointsTestKit
-          with JwtSessionMaterials
+          with RefreshableCookieSessionEndpointsTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 
@@ -61,14 +62,14 @@ package Endpoints {
       class SchedulerEndpointsWithRefreshableHeaderBasicSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with RefreshableHeaderSessionEndpointsTestKit
-          with BasicSessionMaterials
+          with RefreshableHeaderSessionEndpointsTestKit[Session]
+          with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithRefreshableHeaderJwtSessionSpec
           extends SchedulerServiceSpec
           with SchedulerEndpointsTestKit
-          with RefreshableHeaderSessionEndpointsTestKit
-          with JwtSessionMaterials
+          with RefreshableHeaderSessionEndpointsTestKit[Session]
+          with JwtSessionMaterials[Session]
 
     }
 

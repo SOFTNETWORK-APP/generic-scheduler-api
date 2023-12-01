@@ -21,9 +21,9 @@ import scala.concurrent.Future
 import scala.language.implicitConversions
 
 trait SchedulerServiceEndpoints
-    extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult]
+    extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult, Session]
     with SchedulerDao
-    with SchedulerHandler { _: SessionMaterials =>
+    with SchedulerHandler { _: SessionMaterials[Session] =>
 
   import app.softnetwork.serialization._
 

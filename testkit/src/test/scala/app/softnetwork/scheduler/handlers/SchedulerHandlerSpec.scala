@@ -14,7 +14,9 @@ import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.persistence.typed.SampleBehavior
 import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.handlers.SessionRefreshTokenDao
 import app.softnetwork.session.service.BasicSessionMaterials
+import com.softwaremill.session.RefreshTokenStorage
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
@@ -26,9 +28,13 @@ class SchedulerHandlerSpec
     extends SchedulerHandler
     with AnyWordSpecLike
     with SchedulerWithSampleTestKit
-    with BasicSessionMaterials {
+    with BasicSessionMaterials[Session] {
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
+
+  override implicit def refreshTokenStorage: RefreshTokenStorage[Session] = SessionRefreshTokenDao(
+    ts
+  )
 
   override implicit def ts: ActorSystem[_] = typedSystem()
 

@@ -18,15 +18,16 @@ import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.jackson.Serialization
 import org.json4s.{jackson, Formats}
+import org.softnetwork.session.model.Session
 
 trait SchedulerService
     extends Directives
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
-    with ServiceWithSessionDirectives[SchedulerCommand, SchedulerCommandResult]
+    with ServiceWithSessionDirectives[SchedulerCommand, SchedulerCommandResult, Session]
     with SchedulerDao
-    with SchedulerHandler { _: SessionMaterials =>
+    with SchedulerHandler { _: SessionMaterials[Session] =>
 
   implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
 

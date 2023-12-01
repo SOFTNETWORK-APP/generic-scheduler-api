@@ -16,9 +16,11 @@ import app.softnetwork.scheduler.persistence.query.{
 import app.softnetwork.scheduler.persistence.typed.SchedulerBehavior
 import app.softnetwork.scheduler.service.SchedulerServiceEndpoints
 import app.softnetwork.session.CsrfCheckHeader
+import app.softnetwork.session.handlers.SessionRefreshTokenDao
 import app.softnetwork.session.launch.SessionGuardian
+import app.softnetwork.session.model.SessionDataCompanion
 import app.softnetwork.session.service.SessionMaterials
-import com.softwaremill.session.{SessionConfig, SessionManager}
+import com.softwaremill.session.{RefreshTokenStorage, SessionConfig, SessionManager}
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
@@ -70,15 +72,23 @@ trait SchedulerGuardian extends SessionGuardian with CsrfCheckHeader { self: Sch
   override def systemVersion(): String =
     sys.env.getOrElse("VERSION", SchedulerCoreBuildInfo.version)
 
+  protected def manager(implicit
+    sessionConfig: SessionConfig,
+    companion: SessionDataCompanion[Session]
+  ): SessionManager[Session]
+
   def schedulerSwagger: ActorSystem[_] => SwaggerEndpoint = sys =>
-    new SchedulerServiceEndpoints with SwaggerEndpoint with SessionMaterials {
+    new SchedulerServiceEndpoints with SwaggerEndpoint with SessionMaterials[Session] {
       override implicit def system: ActorSystem[_] = sys
       override lazy val ec: ExecutionContext = sys.executionContext
       lazy val log: Logger = LoggerFactory getLogger getClass.getName
       override protected def sessionType: Session.SessionType = self.sessionType
       override implicit def manager(implicit
-        sessionConfig: SessionConfig
+        sessionConfig: SessionConfig,
+        companion: SessionDataCompanion[Session]
       ): SessionManager[Session] = self.manager
+      override implicit def refreshTokenStorage: RefreshTokenStorage[Session] =
+        SessionRefreshTokenDao(system)
       override val applicationVersion: String = systemVersion()
     }
 }

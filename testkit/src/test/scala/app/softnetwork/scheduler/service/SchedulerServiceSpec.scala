@@ -7,10 +7,14 @@ import app.softnetwork.scheduler.model.{CronTab, Schedule}
 import app.softnetwork.scheduler.scalatest.SchedulerRouteTestKit
 import app.softnetwork.serialization
 import app.softnetwork.serialization.commonFormats
+import app.softnetwork.session.handlers.SessionRefreshTokenDao
+import app.softnetwork.session.model.SessionDataCompanion
 import app.softnetwork.session.service.SessionMaterials
+import com.softwaremill.session.RefreshTokenStorage
 import org.json4s.Formats
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.{Logger, LoggerFactory}
+import org.softnetwork.session.model.Session
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success, Try}
@@ -18,9 +22,15 @@ import scala.util.{Failure, Success, Try}
 trait SchedulerServiceSpec
     extends AnyWordSpecLike
     with SchedulerRouteTestKit
-    with SessionMaterials { _: ApiRoutes =>
+    with SessionMaterials[Session] { _: ApiRoutes =>
 
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
+
+  implicit def companion: SessionDataCompanion[Session] = Session
+
+  override implicit def refreshTokenStorage: RefreshTokenStorage[Session] = SessionRefreshTokenDao(
+    t
+  )
 
   implicit lazy val t: ActorSystem[Nothing] = typedSystem()
 

@@ -8,7 +8,7 @@ import app.softnetwork.scheduler.handlers.SchedulerHandler
 import app.softnetwork.scheduler.launch.SchedulerApplication
 import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStream
 import app.softnetwork.session.config.Settings
-import app.softnetwork.session.model.SessionManagers
+import app.softnetwork.session.model.{SessionDataCompanion, SessionManagers}
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.Config
 import org.softnetwork.session.model.Session
@@ -36,7 +36,10 @@ trait SchedulerApi extends SchedulerApplication { _: SchemaProvider =>
   override protected def sessionType: Session.SessionType =
     Settings.Session.SessionContinuityAndTransport
 
-  override protected def manager(implicit sessionConfig: SessionConfig): SessionManager[Session] =
+  override protected def manager(implicit
+    sessionConfig: SessionConfig,
+    companion: SessionDataCompanion[Session]
+  ): SessionManager[Session] =
     SessionManagers.basic
 
 }

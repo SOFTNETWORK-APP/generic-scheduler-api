@@ -11,12 +11,13 @@ import app.softnetwork.serialization._
 import app.softnetwork.session.scalatest.SessionTestKit
 import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
+import org.softnetwork.session.model.Session
 
 trait SchedulerRouteTestKit
-    extends SessionTestKit
+    extends SessionTestKit[Session]
     with SchedulerTestKit
     with SchedulerGrpcServices {
-  _: Suite with ApiRoutes with SessionMaterials =>
+  _: Suite with ApiRoutes with SessionMaterials[Session] =>
 
   override def beforeAll(): Unit = {
     super.beforeAll()

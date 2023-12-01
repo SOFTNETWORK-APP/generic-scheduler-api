@@ -5,7 +5,9 @@ import app.softnetwork.scheduler.scalatest.SchedulerTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.handlers.SessionRefreshTokenDao
 import app.softnetwork.session.service.BasicSessionMaterials
+import com.softwaremill.session.RefreshTokenStorage
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
@@ -15,7 +17,11 @@ class SchedulerClientSpec
     extends AnyWordSpecLike
     with SchedulerTestKit
     with SchedulerGrpcServer
-    with BasicSessionMaterials {
+    with BasicSessionMaterials[Session] {
+
+  override implicit def refreshTokenStorage: RefreshTokenStorage[Session] = SessionRefreshTokenDao(
+    ts
+  )
 
   override implicit def ts: ActorSystem[_] = typedSystem()
 
