@@ -7,9 +7,9 @@ import app.softnetwork.scheduler.handlers.{SchedulerDao, SchedulerHandler}
 import app.softnetwork.scheduler.message.{SchedulerNotFound, _}
 import app.softnetwork.scheduler.model._
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionMaterials}
 import com.softwaremill.session.SessionConfig
-import org.softnetwork.session.model.Session
 import sttp.capabilities
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.Method
@@ -20,20 +20,22 @@ import sttp.tapir.server.{PartialServerEndpointWithSecurityOutput, ServerEndpoin
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
-trait SchedulerServiceEndpoints
-    extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult, Session]
+trait SchedulerServiceEndpoints[SD <: SessionData with SessionDataDecorator[SD]]
+    extends ServiceWithSessionEndpoints[SchedulerCommand, SchedulerCommandResult, SD]
     with SchedulerDao
-    with SchedulerHandler { _: SessionMaterials[Session] =>
+    with SchedulerHandler { _: SessionMaterials[SD] =>
 
   import app.softnetwork.serialization._
 
   implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
 
+  implicit def companion: SessionDataCompanion[SD]
+
   override implicit def ts: ActorSystem[_] = system
 
   def secureEndpoint: PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     Unit,
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
@@ -58,7 +60,7 @@ trait SchedulerServiceEndpoints
 
   val rootSchedulesEndpoint: PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     Unit,
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
@@ -104,7 +106,7 @@ trait SchedulerServiceEndpoints
 
   val rootCronTabsEndpoint: PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     Unit,
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),

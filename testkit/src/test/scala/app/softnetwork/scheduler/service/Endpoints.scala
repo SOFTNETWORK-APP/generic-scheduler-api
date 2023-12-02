@@ -11,13 +11,13 @@ package Endpoints {
 
       class SchedulerEndpointsWithOneOffCookieBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with OneOffCookieSessionEndpointsTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithOneOffCookieJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with OneOffCookieSessionEndpointsTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -27,13 +27,13 @@ package Endpoints {
 
       class SchedulerEndpointsWithOneOffHeaderBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with OneOffHeaderSessionEndpointsTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithOneOffHeaderJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with OneOffHeaderSessionEndpointsTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -46,13 +46,13 @@ package Endpoints {
 
       class SchedulerEndpointsWithRefreshableCookieBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with RefreshableCookieSessionEndpointsTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithRefreshableCookieJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with RefreshableCookieSessionEndpointsTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -61,13 +61,13 @@ package Endpoints {
     package Header {
       class SchedulerEndpointsWithRefreshableHeaderBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with RefreshableHeaderSessionEndpointsTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerEndpointsWithRefreshableHeaderJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerEndpointsTestKit
+          with SchedulerEndpointsTestKit[Session]
           with RefreshableHeaderSessionEndpointsTestKit[Session]
           with JwtSessionMaterials[Session]
 

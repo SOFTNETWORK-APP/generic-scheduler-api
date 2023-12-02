@@ -11,13 +11,13 @@ package Directives {
 
       class SchedulerRoutesWithOneOffCookieBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with OneOffCookieSessionServiceTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithOneOffCookieJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with OneOffCookieSessionServiceTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -26,13 +26,13 @@ package Directives {
 
       class SchedulerRoutesWithOneOffHeaderBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with OneOffHeaderSessionServiceTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithOneOffHeaderJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with OneOffHeaderSessionServiceTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -44,13 +44,13 @@ package Directives {
 
       class SchedulerRoutesWithRefreshableCookieBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with RefreshableCookieSessionServiceTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithRefreshableCookieJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with RefreshableCookieSessionServiceTestKit[Session]
           with JwtSessionMaterials[Session]
 
@@ -59,13 +59,13 @@ package Directives {
     package Header {
       class SchedulerRoutesWithRefreshableHeaderBasicSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with RefreshableHeaderSessionServiceTestKit[Session]
           with BasicSessionMaterials[Session]
 
       class SchedulerRoutesWithRefreshableHeaderJwtSessionSpec
           extends SchedulerServiceSpec
-          with SchedulerRoutesTestKit
+          with SchedulerRoutesTestKit[Session]
           with RefreshableHeaderSessionServiceTestKit[Session]
           with JwtSessionMaterials[Session]
 

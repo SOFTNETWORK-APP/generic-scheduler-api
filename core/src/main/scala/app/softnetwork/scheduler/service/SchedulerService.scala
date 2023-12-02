@@ -10,6 +10,7 @@ import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model._
 import app.softnetwork.serialization._
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
 import com.softwaremill.session.CsrfDirectives.hmacTokenCsrfProtection
 import com.softwaremill.session.CsrfOptions.checkHeader
@@ -18,18 +19,19 @@ import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.jackson.Serialization
 import org.json4s.{jackson, Formats}
-import org.softnetwork.session.model.Session
 
-trait SchedulerService
+trait SchedulerService[SD <: SessionData with SessionDataDecorator[SD]]
     extends Directives
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
-    with ServiceWithSessionDirectives[SchedulerCommand, SchedulerCommandResult, Session]
+    with ServiceWithSessionDirectives[SchedulerCommand, SchedulerCommandResult, SD]
     with SchedulerDao
-    with SchedulerHandler { _: SessionMaterials[Session] =>
+    with SchedulerHandler { _: SessionMaterials[SD] =>
 
   implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
+
+  implicit def companion: SessionDataCompanion[SD]
 
   override implicit def ts: ActorSystem[_] = system
 
