@@ -1,12 +1,13 @@
 package app.softnetwork.scheduler.launch
 
 import akka.actor.typed.ActorSystem
+import app.softnetwork.api.server.GrpcService
 import app.softnetwork.persistence.launch.PersistentEntity
 import app.softnetwork.persistence.launch.PersistenceGuardian._
 import app.softnetwork.persistence.query.EventProcessorStream
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.SchedulerCoreBuildInfo
-import app.softnetwork.scheduler.api.SchedulerServer
+import app.softnetwork.scheduler.api.{SchedulerGrpcService, SchedulerServer}
 import app.softnetwork.scheduler.handlers.SchedulerDao
 import app.softnetwork.scheduler.persistence.query.{
   Entity2SchedulerProcessorStream,
@@ -58,6 +59,11 @@ trait SchedulerGuardian extends SessionGuardian with CsrfCheckHeader { self: Sch
   /** initialize scheduler server
     */
   def schedulerServer: ActorSystem[_] => SchedulerServer = sys => SchedulerServer(sys)
+
+  def schedulerGrpcServices: ActorSystem[_] => Seq[GrpcService] = system =>
+    Seq(
+      new SchedulerGrpcService(schedulerServer(system))
+    )
 
   override def initSystem: ActorSystem[_] => Unit = initSchedulerSystem
 

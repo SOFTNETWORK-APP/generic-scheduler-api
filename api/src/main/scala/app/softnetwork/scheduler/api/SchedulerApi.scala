@@ -1,7 +1,6 @@
 package app.softnetwork.scheduler.api
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import app.softnetwork.persistence.jdbc.query.{JdbcJournalProvider, JdbcOffsetProvider}
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.scheduler.handlers.SchedulerHandler
@@ -10,8 +9,6 @@ import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStre
 import app.softnetwork.session.config.Settings
 import com.typesafe.config.Config
 import org.softnetwork.session.model.Session
-
-import scala.concurrent.Future
 
 trait SchedulerApi extends SchedulerApplication { _: SchemaProvider =>
 
@@ -26,10 +23,6 @@ trait SchedulerApi extends SchedulerApplication { _: SchemaProvider =>
 
         override implicit def system: ActorSystem[_] = sys
       }
-
-  override def grpcServices
-    : ActorSystem[_] => Seq[PartialFunction[HttpRequest, Future[HttpResponse]]] = system =>
-    Seq(SchedulerServiceApiHandler.partial(schedulerServer(system))(system))
 
   override protected def sessionType: Session.SessionType =
     Settings.Session.SessionContinuityAndTransport

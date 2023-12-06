@@ -5,9 +5,9 @@ import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.scheduler.launch.SchedulerGuardian
 import org.scalatest.Suite
 
-trait SchedulerGrpcServer
+trait SchedulerGrpcServerTestKit
     extends PersistenceScalatestGrpcTest
-    with SchedulerGrpcServices
+    with SchedulerGrpcServicesTestKit
     with InMemoryPersistenceTestKit { _: Suite with SchedulerGuardian =>
   override lazy val additionalConfig: String = schedulerGrpcConfig
 }

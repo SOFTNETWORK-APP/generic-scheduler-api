@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 class SchedulerClientSpec
     extends AnyWordSpecLike
     with SchedulerTestKit
-    with SchedulerGrpcServer
+    with SchedulerGrpcServerTestKit
     with BasicSessionMaterials[Session] {
 
   override implicit def refreshTokenStorage: RefreshTokenStorage[Session] = SessionRefreshTokenDao(

@@ -3,7 +3,7 @@ package app.softnetwork.scheduler.scalatest
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.api.server.config.ServerSettings.RootPath
-import app.softnetwork.scheduler.api.SchedulerGrpcServices
+import app.softnetwork.scheduler.api.SchedulerGrpcServicesTestKit
 import app.softnetwork.scheduler.config.SchedulerSettings.SchedulerPath
 import app.softnetwork.scheduler.message._
 import app.softnetwork.scheduler.model.{CronTab, Schedule, Scheduler}
@@ -16,7 +16,7 @@ import org.softnetwork.session.model.Session
 trait SchedulerRouteTestKit
     extends SessionTestKit[Session]
     with SchedulerTestKit
-    with SchedulerGrpcServices {
+    with SchedulerGrpcServicesTestKit {
   _: Suite with ApiRoutes with SessionMaterials[Session] =>
 
   override def beforeAll(): Unit = {
