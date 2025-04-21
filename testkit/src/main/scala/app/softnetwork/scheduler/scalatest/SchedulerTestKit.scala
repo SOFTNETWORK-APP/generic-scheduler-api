@@ -17,7 +17,8 @@ import app.softnetwork.scheduler.persistence.query.Entity2SchedulerProcessorStre
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
 
-trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit { _: Suite =>
+trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit {
+  _: Suite =>
 
   /** @return
     *   roles associated with this node
@@ -38,16 +39,24 @@ trait SchedulerTestKit extends SchedulerGuardian with InMemoryPersistenceTestKit
         log.info(tag)
       }
 
-  val probeScheduleAdded: TestProbe[ScheduleAdded] = createTestProbe[ScheduleAdded]()
-  subscribeProbe(probeScheduleAdded)
+  lazy val probeScheduleAdded: TestProbe[ScheduleAdded] = createTestProbe[ScheduleAdded]()
 
-  val probeScheduleRemoved: TestProbe[ScheduleRemoved] = createTestProbe[ScheduleRemoved]()
-  subscribeProbe(probeScheduleRemoved)
+  lazy val probeScheduleRemoved: TestProbe[ScheduleRemoved] = createTestProbe[ScheduleRemoved]()
 
-  val probeCronTabAdded: TestProbe[CronTabAdded] = createTestProbe[CronTabAdded]()
-  subscribeProbe(probeCronTabAdded)
+  lazy val probeCronTabAdded: TestProbe[CronTabAdded] = createTestProbe[CronTabAdded]()
 
-  val probeCronTabRemoved: TestProbe[CronTabRemoved] = createTestProbe[CronTabRemoved]()
-  subscribeProbe(probeCronTabRemoved)
+  lazy val probeCronTabRemoved: TestProbe[CronTabRemoved] = createTestProbe[CronTabRemoved]()
+
+  def subscribeSchedulerProbes(): Unit = {
+    subscribeProbe(probeScheduleAdded)
+    subscribeProbe(probeScheduleRemoved)
+    subscribeProbe(probeCronTabAdded)
+    subscribeProbe(probeCronTabRemoved)
+  }
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    subscribeSchedulerProbes()
+  }
 
 }
