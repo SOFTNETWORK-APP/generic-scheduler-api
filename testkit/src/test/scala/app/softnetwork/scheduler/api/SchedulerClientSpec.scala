@@ -38,12 +38,12 @@ class SchedulerClientSpec
 
   "Scheduler client" must {
     "add schedule" in {
-      assert(client.addSchedule(schedule) complete ())
+      assert(client.addSchedule(schedule).complete())
     }
 
     "load scheduler" in {
       val scheduler: Option[Scheduler] =
-        client.loadScheduler(Some("my-scheduler")) complete () match {
+        client.loadScheduler(Some("my-scheduler")).complete() match {
           case Success(value) => value
           case Failure(_)     => None
         }
@@ -55,17 +55,17 @@ class SchedulerClientSpec
 
     "remove schedule" in {
       assert(
-        client.removeSchedule(schedule.persistenceId, schedule.entityId, schedule.key) complete ()
+        client.removeSchedule(schedule.persistenceId, schedule.entityId, schedule.key).complete()
       )
     }
 
     "add cron tab" in {
-      assert(client.addCronTab(cronTab) complete ())
+      assert(client.addCronTab(cronTab).complete())
     }
 
     "remove cron tab" in {
       assert(
-        client.removeCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key) complete ()
+        client.removeCronTab(cronTab.persistenceId, cronTab.entityId, cronTab.key).complete()
       )
     }
   }

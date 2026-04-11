@@ -6,9 +6,14 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Date
-import com.markatta.akron.CronExpression
+import com.cronutils.model.CronType
+import com.cronutils.model.definition.CronDefinitionBuilder
+import com.cronutils.model.time.ExecutionTime
+import com.cronutils.parser.CronParser
 import com.typesafe.scalalogging.StrictLogging
 
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
@@ -60,20 +65,26 @@ package object model {
     def view: ScheduleView = ScheduleView(this)
   }
 
+  private val cronDefinition =
+    CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX)
+
+  private val cronParser = new CronParser(cronDefinition)
+
   trait CronTabItem extends StrictLogging {
     def cron: String
 
-    lazy val cronExpression: CronExpression = Try {
-      CronExpression(cron)
+    lazy val executionTime: ExecutionTime = Try {
+      ExecutionTime.forCron(cronParser.parse(cron))
     } match {
       case Success(s) => s
       case Failure(f) =>
         logger.error(f.getMessage + s" -> [$cron]")
-        CronExpression("*/5 * * * *") // By default every 5 minutes
+        ExecutionTime.forCron(cronParser.parse("*/5 * * * *")) // By default every 5 minutes
     }
 
     def nextLocalDateTime(): Option[LocalDateTime] = {
-      cronExpression.nextTriggerTime(LocalDateTime.now())
+      val next = executionTime.nextExecution(ZonedDateTime.now(ZoneId.systemDefault()))
+      if (next.isPresent) Some(next.get().toLocalDateTime) else None
     }
 
     def next(from: Option[Date] = None): Option[FiniteDuration] = {
