@@ -2,7 +2,7 @@ package app.softnetwork.scheduler.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
-import configs.Configs
+import configs.ConfigReader
 
 /** Created by smanciot on 16/12/2020.
   */
@@ -12,7 +12,9 @@ object SchedulerSettings extends StrictLogging {
     ConfigFactory.load().withFallback(ConfigFactory.load("softnetwork-scheduler.conf"))
 
   lazy val SchedulerConfig: SchedulerConfig =
-    Configs[SchedulerConfig].get(config, "softnetwork.scheduler").toEither match {
+    ConfigReader[SchedulerConfig]
+      .read(config, "softnetwork.scheduler")
+      .toEither match {
       case Left(configError) =>
         logger.error(s"Something went wrong with the provided arguments $configError")
         throw configError.configException

@@ -49,6 +49,7 @@ trait SchedulerServer extends SchedulerServiceApi with SchedulerHandler {
           case _: CronTabAdded => AddCronTabResponse(true)
           case _               => AddCronTabResponse()
         }
+      case _ => Future.successful(AddCronTabResponse())
     }
   }
 
