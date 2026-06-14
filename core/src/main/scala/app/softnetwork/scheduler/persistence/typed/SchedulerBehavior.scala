@@ -223,7 +223,11 @@ private[scheduler] trait SchedulerBehavior
                   .persist(
                     List(
                       ScheduleAddedEvent(updatedSchedule), // update schedule
+                      // Story 13.7 — carry the correlation id onto the triggered event: the schedule
+                      // (model #9) is the durable hop to the consumer; the event's own #2 field is for
+                      // the scheduler's journal/audit.
                       ScheduleTriggeredEvent(updatedSchedule)
+                        .copy(correlationId = updatedSchedule.correlationId)
                     )
                   )
                   .thenRun(_ => {
