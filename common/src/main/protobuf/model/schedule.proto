@@ -28,6 +28,12 @@ message Schedule {
     optional google.protobuf.Timestamp scheduledDate = 6 [(scalapb.field).type = "java.util.Date"];
     optional google.protobuf.Timestamp lastTriggered = 7 [(scalapb.field).type = "java.util.Date"];
     optional string cronTab = 8;
+    // Story 13.7 — cross-service correlation id. Set when the schedule is added (e.g. a license
+    // renewal scheduled at issuance carries the checkout's id); preserved through copy /
+    // withLastTriggered and onto ScheduleTriggeredEvent so the base consumer (which forwards only
+    // evt.schedule) reaches the triggered action with the originating id. ScalaPB → correlationId:
+    // Option[String] + withCorrelationId.
+    optional string correlation_id = 9;
 }
 
 // CronTab

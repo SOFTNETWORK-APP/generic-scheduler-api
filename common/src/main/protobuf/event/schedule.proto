@@ -44,7 +44,13 @@ message ScheduleAddedEvent {
 message ScheduleTriggeredEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "SchedulerEvent";
+    // Story 13.7 — AuditableEvent (resolves via the file-level import of
+    // app.softnetwork.persistence.message._). The event carries the correlation id for the scheduler's
+    // own journal/audit; the durable hop to the consumer is the id on `schedule` (model #9), since
+    // Scheduler2EntityProcessorStream forwards only evt.schedule.
+    option (scalapb.message).extends = "AuditableEvent";
     required app.softnetwork.scheduler.model.Schedule schedule = 1;
+    optional string correlation_id = 2;
 }
 
 message ScheduleRemovedEvent {

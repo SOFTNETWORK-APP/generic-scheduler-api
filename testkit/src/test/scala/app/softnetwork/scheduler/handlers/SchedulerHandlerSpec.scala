@@ -166,5 +166,20 @@ class SchedulerHandlerSpec
         case other                => fail(other.getClass)
       }
     }
+    "preserve the correlation id through add and trigger (Story 13.7)" in {
+      val cid = "corr-13-7"
+      // a schedule carrying a cross-service correlation id (e.g. a license renewal scheduled at
+      // issuance) must keep it through add -> state -> trigger, so the base consumer (which forwards
+      // only evt.schedule) reaches the triggered action with the originating id.
+      val schedule = Schedule("p", "corr", "add", 1).withCorrelationId(cid)
+      this !? AddSchedule(schedule) assert {
+        case r: ScheduleAdded => assert(r.schedule.correlationId.contains(cid))
+        case other            => fail(other.getClass)
+      }
+      this !? TriggerSchedule(schedule.persistenceId, schedule.entityId, schedule.key) assert {
+        case r: ScheduleTriggered => assert(r.schedule.correlationId.contains(cid))
+        case other                => fail(other.getClass)
+      }
+    }
   }
 }

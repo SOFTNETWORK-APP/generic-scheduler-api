@@ -1,6 +1,6 @@
 object Versions {
 
-  val genericPersistence = "0.8.1"
+  val genericPersistence = "0.9-SNAPSHOT"
 
   val scalatest = "3.2.16"
 }
