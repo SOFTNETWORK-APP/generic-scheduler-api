@@ -116,6 +116,7 @@ package object model {
             .withScheduledDate(date)
 //            .withRepeatedly(true)
             .withCronTab(cronTab.uuid)
+            .copy(correlationId = cronTab.correlationId)
         )
       case _ => None
     }
