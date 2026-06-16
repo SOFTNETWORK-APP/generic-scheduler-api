@@ -47,6 +47,10 @@ message CronTab {
     required string cron = 4;
     optional google.protobuf.Timestamp lastTriggered = 5 [(scalapb.field).type = "java.util.Date"];
     optional google.protobuf.Timestamp nextTriggered = 6 [(scalapb.field).type = "java.util.Date"];
+    // Story 13.7 — cross-service correlation id. Carried onto the derived Schedule in
+    // cronTabToSchedule so cron-based recurring renewals reach the consumer with the originating
+    // id. ScalaPB → correlationId: Option[String] + withCorrelationId.
+    optional string correlation_id = 7;
 }
 
 // Scheduler
